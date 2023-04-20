@@ -9,6 +9,7 @@ class AppException extends Equatable{
 
 enum DBExceptionType{
   platform,
+  empty,
   normal
 }
 

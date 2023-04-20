@@ -1,22 +1,16 @@
-import 'package:equatable/equatable.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart';
 
-class Day extends Equatable{
+class Day extends DayCreation{
   final int id;
-  final String weekDay;
-  final List<HabitActivity> activities;
-  final int work;
-  Day({
+  const Day({
     required this.id,
-    required this.weekDay,
-    required this.activities,
-    required this.work
+    required super.date,
+    required super.activities,
+    required super.work
   });
   @override
   List<Object?> get props => [
-    id,
-    weekDay,
-    activities,
-    work
+    ...super.props,
+    id
   ];
 }

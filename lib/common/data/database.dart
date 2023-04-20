@@ -22,8 +22,7 @@ const weekDaysHollyDayValue = 'hollyday';
 // ************ days relation
 const daysTableName = 'days';
 const daysDateKey = 'date';
-const daysWeekDayIdKey = 'week_day';
-const dayWorkKey = 'work';
+const daysWorkKey = 'work';
 // ************ activities relation
 const activitiesTableName = 'activities';
 const activitiesNameKey = 'name';
@@ -34,8 +33,6 @@ const activitiesWorkKey = 'work';
 const daysActivitiesTableName = 'days_activities';
 const daysActivitiesActivityIdKey = 'activity_id';
 const daysActivitiesDayIdKey = 'day_id';
-
-
 
 abstract class DatabaseManager{
   Future<List<Map<String, dynamic>>> queryAll(String tableName);
@@ -140,9 +137,7 @@ class CustomDataBaseFactory{
       CREATE TABLE $daysTableName (
         $idKey INTEGER PRIMARY KEY,
         $daysDateKey TEXT NOT NULL,
-        $daysWeekDayIdKey INTEGER,
-        $dayWorkKey INTEGER,
-        $daysWeekDayIdKey INTEGER REFERENCES $weekDaysTableName($daysWeekDayIdKey)
+        $daysWorkKey INTEGER
       )
     '''
     );

@@ -1,25 +1,16 @@
-import 'package:equatable/equatable.dart';
-import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
+import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
 
-class HabitActivity extends Equatable{
+class HabitActivity extends HabitActivityCreation{
   final int id;
-  final String name;
-  final CustomTime initialHour;
-  final int minutesDuration;
-  final int work;
   const HabitActivity({
+    required super.name,
+    required super.initialTime,
+    required super.minutesDuration,
+    required super.work,
     required this.id,
-    required this.name,
-    required this.initialHour,
-    required this.minutesDuration,
-    required this.work
   });
   @override
   List<Object?> get props => [
-    id,
-    name,
-    initialHour,
-    minutesDuration,
-    work
+    id
   ];
 }
