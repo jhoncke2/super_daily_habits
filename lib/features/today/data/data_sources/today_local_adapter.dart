@@ -4,6 +4,7 @@ import 'package:super_daily_habits/features/today/domain/entities/day_creation.d
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/common/data/database.dart' as database;
+import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
 
 abstract class TodayLocalAdapter{
@@ -12,6 +13,7 @@ abstract class TodayLocalAdapter{
   String getStringMapFromDate(CustomDate date);
   Map<String, dynamic> getMapFromActivity(HabitActivityCreation activity);
   Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, int activityId);
+  List<HabitActivity> getActivitiesFromJson(List<Map<String, dynamic>> jsonList);
 }
 
 class TodayLocalAdapterImpl extends TodayLocalAdapter{
@@ -77,4 +79,25 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
     database.daysActivitiesDayIdKey: dayId,
     database.daysActivitiesActivityIdKey: activityId
   };
+  
+  @override
+  List<HabitActivity> getActivitiesFromJson(List<Map<String, dynamic>> jsonList) => jsonList.map<HabitActivity>(
+    (item) => HabitActivity(
+      id: item[database.idKey],
+      name: item[database.activitiesNameKey],
+      initialTime: _getTimeFromJsonString(
+        item[database.activitiesInitHourKey]
+      ),
+      minutesDuration: item[database.activitiesDurationKey],
+      work: item[database.activitiesWorkKey]
+    )
+  ).toList();
+
+  CustomTime _getTimeFromJsonString(String jsonString){
+    final json = jsonDecode(jsonString);
+    return CustomTime(
+      hour: json[hourKey],
+      minute: json[minuteKey]
+    );
+  }
 }

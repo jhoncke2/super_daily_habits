@@ -39,4 +39,10 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
     final jsonDayActivity = adapter.getMapFromDayIdAndActivityId(day.id, activityId);
     await dbManager.insert(daysActivitiesTableName, jsonDayActivity);
   }
+  
+  @override
+  Future<Day> getDayById(int id)async{
+    // TODO: implement getDayById
+    throw UnimplementedError();
+  }
 }

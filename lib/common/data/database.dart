@@ -34,6 +34,30 @@ const daysActivitiesTableName = 'days_activities';
 const daysActivitiesActivityIdKey = 'activity_id';
 const daysActivitiesDayIdKey = 'day_id';
 
+const tablesColumns = {
+  weekDaysTableName: [
+    idKey,
+    weekDaysNameKey
+  ],
+  daysTableName: [
+    idKey,
+    daysDateKey,
+    daysWorkKey
+  ],
+  activitiesTableName: [
+    idKey,
+    activitiesNameKey,
+    activitiesInitHourKey,
+    activitiesDurationKey,
+    activitiesWorkKey
+  ],
+  daysActivitiesTableName: [
+    idKey,
+    daysActivitiesActivityIdKey,
+    daysActivitiesDayIdKey
+  ]
+};
+
 abstract class DatabaseManager{
   Future<List<Map<String, dynamic>>> queryAll(String tableName);
   Future<Map<String, dynamic>> querySingleOne(String tableName, int id);
@@ -42,6 +66,7 @@ abstract class DatabaseManager{
   Future<void> update(String tableName, Map<String, dynamic> updatedData, int id);
   Future<void> remove(String tableName, int id);
   Future<void> removeAll(String tableName);
+  Future<List<Map<String, dynamic>>> queryInnerJoin(String tableName1, String table1JoinedColumn, String tableName2, String table2JoinedColumn, String whereStatement, List<dynamic> whereVariables);
 }
 
 class DataBaseManagerImpl implements DatabaseManager{
@@ -108,6 +133,22 @@ class DataBaseManagerImpl implements DatabaseManager{
         type: DBExceptionType.platform
       );
     }
+  }
+  
+  @override
+  Future<List<Map<String, dynamic>>> queryInnerJoin(String tableName1, String table1JoinedColumn, String tableName2, String table2JoinedColumn, String whereStatement, List whereVariables)async{
+    return await _executeOperation(()async =>
+    //TODO: Arreglar la cantidad de espacios a la izquierda de implementación vs el test
+      await db.rawQuery(
+        '''
+          SELECT * FROM $tableName1
+            INNER JOIN $tableName2
+            ON $tableName1.$table1JoinedColumn = $tableName2.$table2JoinedColumn
+            WHERE $whereStatement
+        ''',
+        whereVariables
+      )
+    );
   }
 }
 

@@ -15,6 +15,8 @@ import 'package:super_daily_habits/features/today/domain/entities/day.dart'
     as _i2;
 import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart'
     as _i6;
+import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart'
+    as _i9;
 import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart'
     as _i8;
 
@@ -149,6 +151,26 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+  @override
+  _i4.Future<List<Map<String, dynamic>>> queryInnerJoin(
+    String? tableName1,
+    String? tableName2,
+    String? whereStatement,
+    List<dynamic>? whereVariables,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #queryInnerJoin,
+          [
+            tableName1,
+            tableName2,
+            whereStatement,
+            whereVariables,
+          ],
+        ),
+        returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i4.Future<List<Map<String, dynamic>>>);
 }
 
 /// A class which mocks [TodayLocalAdapter].
@@ -215,4 +237,14 @@ class MockTodayLocalAdapter extends _i1.Mock implements _i5.TodayLocalAdapter {
         ),
         returnValue: <String, dynamic>{},
       ) as Map<String, dynamic>);
+  @override
+  List<_i9.HabitActivity> getActivitiesFromJson(
+          List<Map<String, dynamic>>? jsonList) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getActivitiesFromJson,
+          [jsonList],
+        ),
+        returnValue: <_i9.HabitActivity>[],
+      ) as List<_i9.HabitActivity>);
 }

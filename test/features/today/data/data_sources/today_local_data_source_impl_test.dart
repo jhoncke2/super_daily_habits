@@ -8,6 +8,7 @@ import 'package:super_daily_habits/features/today/data/data_sources/today_local_
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
 import 'today_local_data_source_impl_test.mocks.dart';
 
@@ -29,11 +30,12 @@ void main(){
     );
   });
 
-  group('get day from date', _testGetDayFromDate);
+  group('get day by date', _testGetDayByDate);
+  group('get day by id', _testGetDayById);
   group('set activity to day', _testSetActivityToDay);
 }
 
-void _testGetDayFromDate(){
+void _testGetDayByDate(){
   late CustomDate tDate;
   late String tStringJsonDate;
   setUp((){
@@ -106,6 +108,85 @@ void _testGetDayFromDate(){
         fail('La exce´ción debería ser DBException');
       }
     }
+  });
+}
+
+void _testGetDayById(){
+  late int tId;
+  setUp((){
+    tId = 0;
+  });
+  group('Cuando todo sale bien', (){
+    late Map<String, dynamic> tJsonDay;
+    late Day tInitialDay;
+    late Day tUpdatedDay;
+    late List<Map<String, dynamic>> tJsonActivities;
+    late List<HabitActivity> tActivities;
+    setUp((){
+      tJsonDay = {
+        'id': tId,
+        'date': '{...date...}',
+        'work': 100
+      };
+      final dayDate = CustomDate.fromDateTime(DateTime.now());
+      tInitialDay = Day(
+        id: tId,
+        date: dayDate,
+        activities: [],
+        work: 100
+      );
+      tJsonActivities = [
+        {
+          'id': 100,
+          'name': 'ac_100',
+          'initial_time': '{...time...}',
+          'duration': 10,
+          'work': 10
+        },
+        {
+          'id': 101,
+          'name': 'ac_101',
+          'initial_time': '{...time...}',
+          'duration': 10,
+          'work': 11
+        }
+      ];
+      tActivities = const [
+        HabitActivity(
+          id: 100,
+          name: 'ac_100',
+          initialTime: CustomTime(
+            hour: 10,
+            minute: 10
+          ),
+          minutesDuration: 10,
+          work: 10
+        ),
+        HabitActivity(
+          id: 101,
+          name: 'ac_101',
+          initialTime: CustomTime(
+            hour: 11,
+            minute: 11
+          ),
+          minutesDuration: 10,
+          work: 11
+        )
+      ];
+      tUpdatedDay = Day(
+        id: tId,
+        date: dayDate,
+        activities: tActivities,
+        work: 100
+      );
+    });
+
+    test('Se debe llamar a los métodos esperados', ()async{
+      await todayLocalDataSource.getDayById(tId);
+      verify(dbManager.querySingleOne(daysTableName, tId));
+      verify(adapter.getEmptyDayFromMap(tJsonDay));
+      //TODO: Implementar query entre dos relaciones (DaysActivities y Activities)
+    });
   });
 }
 
