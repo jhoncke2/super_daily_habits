@@ -8,8 +8,8 @@ import 'package:super_daily_habits/features/today/data/data_sources/today_local_
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'today_local_data_source_impl_test.mocks.dart';
 
 late TodayLocalDataSourceImpl todayLocalDataSource;
@@ -112,30 +112,23 @@ void _testGetDayByDate(){
 }
 
 void _testGetDayById(){
-  late int tId;
+  late int tDayId;
   setUp((){
-    tId = 0;
+    tDayId = 0;
   });
   group('Cuando todo sale bien', (){
-    late Map<String, dynamic> tJsonDay;
-    late Day tInitialDay;
-    late Day tUpdatedDay;
-    late List<Map<String, dynamic>> tJsonActivities;
+    late Map<String, dynamic> jsonDay;
+    late Day updatedDay;
+    late List<Map<String, dynamic>> jsonActivities;
     late List<HabitActivity> tActivities;
     setUp((){
-      tJsonDay = {
-        'id': tId,
+      jsonDay = {
+        'id': tDayId,
         'date': '{...date...}',
         'work': 100
       };
       final dayDate = CustomDate.fromDateTime(DateTime.now());
-      tInitialDay = Day(
-        id: tId,
-        date: dayDate,
-        activities: [],
-        work: 100
-      );
-      tJsonActivities = [
+      jsonActivities = [
         {
           'id': 100,
           'name': 'ac_100',
@@ -173,19 +166,43 @@ void _testGetDayById(){
           work: 11
         )
       ];
-      tUpdatedDay = Day(
-        id: tId,
+      updatedDay = Day(
+        id: tDayId,
         date: dayDate,
         activities: tActivities,
         work: 100
       );
+      when(dbManager.querySingleOne(daysTableName, any))
+          .thenAnswer((_) async => jsonDay);
+      when(dbManager.queryInnerJoin(
+        daysActivitiesTableName,
+        any,
+        activitiesTableName,
+        any,
+        any,
+        any
+      )).thenAnswer((_) async => jsonActivities);
+      when(adapter.getFilledDayWithActivitiesFromMap(any, any))
+          .thenReturn(updatedDay);
     });
 
     test('Se debe llamar a los métodos esperados', ()async{
-      await todayLocalDataSource.getDayById(tId);
-      verify(dbManager.querySingleOne(daysTableName, tId));
-      verify(adapter.getEmptyDayFromMap(tJsonDay));
-      //TODO: Implementar query entre dos relaciones (DaysActivities y Activities)
+      await todayLocalDataSource.getDayById(tDayId);
+      verify(dbManager.querySingleOne(daysTableName, tDayId));
+      verify(dbManager.queryInnerJoin(
+        daysActivitiesTableName,
+        daysActivitiesActivityIdKey,
+        activitiesTableName,
+        idKey,
+        TodayLocalDataSourceImpl.dayByIdInnerJoinQuery,
+        [tDayId]
+      ));
+      verify(adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities));
+    });
+
+    test('Debe retornar el resultado esperado', ()async{
+      final result = await todayLocalDataSource.getDayById(tDayId);
+      expect(result, updatedDay);
     });
   });
 }

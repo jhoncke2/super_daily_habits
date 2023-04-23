@@ -4,10 +4,11 @@ import 'package:super_daily_habits/features/today/data/data_sources/today_local_
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 
 class TodayLocalDataSourceImpl implements TodayLocalDataSource{
   static const dayByDateQuery = '$daysDateKey = ?';
+  static const dayByIdInnerJoinQuery = '$daysActivitiesTableName.$daysActivitiesDayIdKey = ?';
   final DatabaseManager dbManager;
   final TodayLocalAdapter adapter;
   TodayLocalDataSourceImpl({
@@ -42,7 +43,15 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
   
   @override
   Future<Day> getDayById(int id)async{
-    // TODO: implement getDayById
-    throw UnimplementedError();
+    final jsonDay = await dbManager.querySingleOne(daysTableName, id);
+    final jsonActivities = await dbManager.queryInnerJoin(
+      daysActivitiesTableName,
+      daysActivitiesActivityIdKey,
+      activitiesTableName,
+      idKey,
+      dayByIdInnerJoinQuery,
+      [id]
+    );
+    return adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities);
   }
 }

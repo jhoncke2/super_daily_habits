@@ -9,16 +9,16 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:super_daily_habits/common/data/database.dart' as _i3;
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart'
     as _i5;
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart'
+    as _i9;
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart'
+    as _i8;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
     as _i7;
 import 'package:super_daily_habits/features/today/domain/entities/day.dart'
     as _i2;
 import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart'
     as _i6;
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart'
-    as _i9;
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart'
-    as _i8;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -154,7 +154,9 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
   @override
   _i4.Future<List<Map<String, dynamic>>> queryInnerJoin(
     String? tableName1,
+    String? table1JoinedColumn,
     String? tableName2,
+    String? table2JoinedColumn,
     String? whereStatement,
     List<dynamic>? whereVariables,
   ) =>
@@ -163,7 +165,9 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
           #queryInnerJoin,
           [
             tableName1,
+            table1JoinedColumn,
             tableName2,
+            table2JoinedColumn,
             whereStatement,
             whereVariables,
           ],
@@ -201,6 +205,30 @@ class MockTodayLocalAdapter extends _i1.Mock implements _i5.TodayLocalAdapter {
           Invocation.method(
             #getEmptyDayFromMap,
             [map],
+          ),
+        ),
+      ) as _i2.Day);
+  @override
+  _i2.Day getFilledDayWithActivitiesFromMap(
+    Map<String, dynamic>? jsonDay,
+    List<Map<String, dynamic>>? jsonActivities,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getFilledDayWithActivitiesFromMap,
+          [
+            jsonDay,
+            jsonActivities,
+          ],
+        ),
+        returnValue: _FakeDay_0(
+          this,
+          Invocation.method(
+            #getFilledDayWithActivitiesFromMap,
+            [
+              jsonDay,
+              jsonActivities,
+            ],
           ),
         ),
       ) as _i2.Day);

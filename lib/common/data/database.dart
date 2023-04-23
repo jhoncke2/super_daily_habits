@@ -137,18 +137,29 @@ class DataBaseManagerImpl implements DatabaseManager{
   
   @override
   Future<List<Map<String, dynamic>>> queryInnerJoin(String tableName1, String table1JoinedColumn, String tableName2, String table2JoinedColumn, String whereStatement, List whereVariables)async{
+    final query = _formatQuery(
+      '''
+        SELECT * FROM $tableName1
+          INNER JOIN $tableName2
+          ON $tableName1.$table1JoinedColumn = $tableName2.$table2JoinedColumn
+          WHERE $whereStatement
+      '''
+    );
     return await _executeOperation(()async =>
-    //TODO: Arreglar la cantidad de espacios a la izquierda de implementación vs el test
       await db.rawQuery(
-        '''
-          SELECT * FROM $tableName1
-            INNER JOIN $tableName2
-            ON $tableName1.$table1JoinedColumn = $tableName2.$table2JoinedColumn
-            WHERE $whereStatement
-        ''',
+        query,
         whereVariables
       )
     );
+  }
+
+  String _formatQuery(String query){
+    final lines = query.split('\n');
+    return (
+      lines.map<String>(
+        (line) => line.trim()
+      ).toList()
+    ).join('\n');
   }
 }
 

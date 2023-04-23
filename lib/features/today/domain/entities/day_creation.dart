@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 
 enum WeekDay{
   monday,

@@ -4,12 +4,13 @@ import 'package:super_daily_habits/features/today/domain/entities/day_creation.d
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/common/data/database.dart' as database;
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity.dart';
-import 'package:super_daily_habits/features/today/domain/entities/habit_activity_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 
 abstract class TodayLocalAdapter{
   Map<String, dynamic> getMapFromDay(DayCreation day);
   Day getEmptyDayFromMap(Map<String, dynamic> map);
+  Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities);
   String getStringMapFromDate(CustomDate date);
   Map<String, dynamic> getMapFromActivity(HabitActivityCreation activity);
   Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, int activityId);
@@ -64,7 +65,7 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
   @override
   Map<String, dynamic> getMapFromActivity(HabitActivityCreation activity) => {
     database.activitiesNameKey: activity.name,
-    database.activitiesInitHourKey: _getStringMapFromTime(activity.initialTime),
+    database.activitiesInitHourKey: _getStringMapFromTime(activity.initialTime!),
     database.activitiesDurationKey: activity.minutesDuration,
     database.activitiesWorkKey: activity.work
   };
@@ -100,4 +101,24 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
       minute: json[minuteKey]
     );
   }
+  
+  @override
+  Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities) => Day(
+    id: jsonDay[database.idKey],
+    date: _getDateFromMap(
+      jsonDay[database.daysDateKey]
+    ),
+    activities: jsonActivities.map<HabitActivity>(
+      (item) => HabitActivity(
+        id: item[database.idKey],
+        name: item[database.activitiesNameKey],
+        initialTime: _getTimeFromJsonString(
+          item[database.activitiesInitHourKey]
+        ),
+        minutesDuration: item[database.activitiesDurationKey],
+        work: item[database.activitiesWorkKey]
+      )
+    ).toList(),
+    work: jsonDay[database.daysWorkKey]
+  );
 }

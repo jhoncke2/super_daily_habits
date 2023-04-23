@@ -59,13 +59,12 @@ void _testQueryInnerJoin(){
       whereVariables
     );
     verify(db.rawQuery(
-      //TODO: Arreglar la cantidad de espacios a la izquierda del test vs implementación
-      '''
-        SELECT * FROM $tableName1
-          INNER JOIN $tableName2
-          ON $tableName1.$table1JoinedColumn = $tableName2.$table2JoinedColumn
-          WHERE $whereStatement
-      ''',
+'''
+SELECT * FROM $tableName1
+INNER JOIN $tableName2
+ON $tableName1.$table1JoinedColumn = $tableName2.$table2JoinedColumn
+WHERE $whereStatement
+''',
       whereVariables
     ));
   });
