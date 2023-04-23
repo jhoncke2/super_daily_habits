@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/features/today/presentation/today_page.dart';
 import './injection_container.dart' as ic;
 
@@ -17,9 +18,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue
+        //primarySwatch: AppColors.primary,
+        primaryColor: AppColors.primary
       ),
-      home: const TodayPage()
+      home: const TodayPage(),
     );
   }
 }

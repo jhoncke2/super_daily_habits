@@ -32,7 +32,7 @@ class WorkBar extends StatelessWidget {
             width: dimens.getWidthPercentage(0.25),
             height: dimens.getHeightPercentage(0.025),
             decoration: BoxDecoration(
-              color: AppColors.primaryDark,
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(25)
             ),
           )

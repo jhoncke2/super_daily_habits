@@ -16,7 +16,7 @@ class TodayPage extends StatelessWidget {
             builder: (blocContext, blocState) {
               _managePostFrameCallbacks(blocContext, blocState);
               return (
-                (blocState is OnShowingTodayDay)?
+                (blocState is OnTodayDay)?
                   TodayLoaded(
                     today: blocState.today,
                   ):
