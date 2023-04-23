@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
@@ -11,6 +12,7 @@ part 'today_event.dart';
 part 'today_state.dart';
 
 class TodayBloc extends Bloc<TodayEvent, TodayState> {
+  static const unexpectedErrorMessage = 'Ha ocurdido un error inesperado';
   final TodayRepository repository;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
@@ -34,6 +36,8 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         _updateActivityWork(emit, event);
       }else if(event is CreateActivity){
         await _createActivity(emit);
+      }else if(event is CancelActivityCreation){
+        _cancelActivityCreation(emit);
       }
     });
   }
@@ -124,7 +128,29 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   }
 
   Future<void> _createActivity(Emitter<TodayState> emit)async{
+    final initialState = (state as OnCreatingActivity);
+    try{
+      emit(OnLoadingTodayDay());
+      final updatedDay = await repository.setActivityToDay(
+        initialState.activity,
+        initialState.today
+      );
+      emit(OnTodayDay(today: updatedDay));
+    }on AppException catch(exception){
+      emit(OnCreatingActivityError(
+        today: initialState.today,
+        activity: initialState.activity,
+        canEnd: initialState.canEnd,
+        message: exception.message.isNotEmpty? exception.message : unexpectedErrorMessage
+      ));
+    }
+  }
 
+  void _cancelActivityCreation(Emitter<TodayState> emit){
+    final initialState = (state as OnCreatingActivity);
+    emit(OnTodayDay(
+      today: initialState.today
+    ));
   }
 
   HabitActivityCreation _getActivityCreationFromExistent(

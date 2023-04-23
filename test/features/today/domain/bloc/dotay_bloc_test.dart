@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
@@ -240,5 +241,46 @@ void _testCreateActivity(){
       expectLater(todayBloc.stream, emitsInOrder(states));
       todayBloc.add(CreateActivity());
     });
+  });
+
+  test('''Debe emitir los siguientes estados en el orden esperados
+  cuando ocurre un AppException <con> menesaje''', ()async{
+    const message = 'error_message';
+    when(todayRepository.setActivityToDay(any, any))
+        .thenThrow(const DBException(
+          message: message,
+          type: DBExceptionType.normal
+        ));
+    final states = [
+      OnLoadingTodayDay(),
+      OnCreatingActivityError(
+        today: initDay,
+        activity: activity,
+        canEnd: true,
+        message: message
+      )
+    ];
+    expectLater(todayBloc.stream, emitsInOrder(states));
+    todayBloc.add(CreateActivity());
+  });
+  
+  test('''Debe emitir los siguientes estados en el orden esperados
+  cuando ocurre un AppException <sin> menesaje''', ()async{
+    when(todayRepository.setActivityToDay(any, any))
+        .thenThrow(const DBException(
+          message: '',
+          type: DBExceptionType.normal
+        ));
+    final states = [
+      OnLoadingTodayDay(),
+      OnCreatingActivityError(
+        today: initDay,
+        activity: activity,
+        canEnd: true,
+        message: TodayBloc.unexpectedErrorMessage
+      )
+    ];
+    expectLater(todayBloc.stream, emitsInOrder(states));
+    todayBloc.add(CreateActivity());
   });
 }

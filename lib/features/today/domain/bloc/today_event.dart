@@ -39,6 +39,6 @@ class CreateActivity extends TodayEvent{
 
 }
 
-class CancelActtivityCreation extends TodayEvent{
+class CancelActivityCreation extends TodayEvent{
   
 }

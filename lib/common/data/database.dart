@@ -34,30 +34,6 @@ const daysActivitiesTableName = 'days_activities';
 const daysActivitiesActivityIdKey = 'activity_id';
 const daysActivitiesDayIdKey = 'day_id';
 
-const tablesColumns = {
-  weekDaysTableName: [
-    idKey,
-    weekDaysNameKey
-  ],
-  daysTableName: [
-    idKey,
-    daysDateKey,
-    daysWorkKey
-  ],
-  activitiesTableName: [
-    idKey,
-    activitiesNameKey,
-    activitiesInitHourKey,
-    activitiesDurationKey,
-    activitiesWorkKey
-  ],
-  daysActivitiesTableName: [
-    idKey,
-    daysActivitiesActivityIdKey,
-    daysActivitiesDayIdKey
-  ]
-};
-
 abstract class DatabaseManager{
   Future<List<Map<String, dynamic>>> queryAll(String tableName);
   Future<Map<String, dynamic>> querySingleOne(String tableName, int id);
@@ -181,7 +157,7 @@ class CustomDataBaseFactory{
       CREATE TABLE $weekDaysTableName (
         $idKey INTEGER PRIMARY KEY,
         $weekDaysNameKey TEXT NOT NULL,
-        CONSTRAINT $weekDaysNameConstraintName check ($weekDaysNameKey in ($weekDaysMondayValue, $weekDaysThursdayValue, $weekDaysWednesdayValue, $weekDaysTwesdayValue, $weekDaysFridayValue, $weekDaysSaturdayValue, $weekDaysSundayValue, $weekDaysHollyDayValue))
+        CONSTRAINT $weekDaysNameConstraintName check ($weekDaysNameKey in ("$weekDaysMondayValue", "$weekDaysThursdayValue", "$weekDaysWednesdayValue", "$weekDaysTwesdayValue", "$weekDaysFridayValue", "$weekDaysSaturdayValue", "$weekDaysSundayValue", "$weekDaysHollyDayValue"))
       )
     '''
     );
