@@ -100,31 +100,39 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   }
 
   void _updateActivityMinutesDuration(Emitter<TodayState> emit, UpdateActivityMinutesDuration event){
-    final initialState = (state as OnCreatingActivity);
-    final activity = _getActivityCreationFromExistent(
-      initialState.activity,
-      minutesDuration: event.minutesDuration
-    );
-    final canEnd = activityCompletitionValidator.isCompleted(activity);
-    emit(OnCreatingActivity(
-      today: initialState.today,
-      activity: activity,
-      canEnd: canEnd
-    ));
+    try{
+      final initialState = (state as OnCreatingActivity);
+      final activity = _getActivityCreationFromExistent(
+        initialState.activity,
+        minutesDuration: int.parse(event.minutesDuration)
+      );
+      final canEnd = activityCompletitionValidator.isCompleted(activity);
+      emit(OnCreatingActivity(
+        today: initialState.today,
+        activity: activity,
+        canEnd: canEnd
+      ));
+    }on Object catch(_){
+
+    }
   }
 
   void _updateActivityWork(Emitter<TodayState> emit, UpdateActivityWork event){
-    final initialState = (state as OnCreatingActivity);
-    final activity = _getActivityCreationFromExistent(
-      initialState.activity,
-      work: event.work
-    );
-    final canEnd = activityCompletitionValidator.isCompleted(activity);
-    emit(OnCreatingActivity(
-      today: initialState.today,
-      activity: activity,
-      canEnd: canEnd
-    ));
+    try{
+      final initialState = (state as OnCreatingActivity);
+      final activity = _getActivityCreationFromExistent(
+        initialState.activity,
+        work: int.parse(event.work)
+      );
+      final canEnd = activityCompletitionValidator.isCompleted(activity);
+      emit(OnCreatingActivity(
+        today: initialState.today,
+        activity: activity,
+        canEnd: canEnd
+      ));
+    }on Object catch(_){
+
+    }
   }
 
   Future<void> _createActivity(Emitter<TodayState> emit)async{
@@ -135,7 +143,9 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         initialState.activity,
         initialState.today
       );
-      emit(OnTodayDay(today: updatedDay));
+      emit(OnShowingTodayDay(
+        today: updatedDay
+      ));
     }on AppException catch(exception){
       emit(OnCreatingActivityError(
         today: initialState.today,
@@ -148,7 +158,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
 
   void _cancelActivityCreation(Emitter<TodayState> emit){
     final initialState = (state as OnCreatingActivity);
-    emit(OnTodayDay(
+    emit(OnShowingTodayDay(
       today: initialState.today
     ));
   }

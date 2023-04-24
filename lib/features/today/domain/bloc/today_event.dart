@@ -26,12 +26,12 @@ class UpdateActivityInitialTime extends TodayEvent{
 }
 
 class UpdateActivityMinutesDuration extends TodayEvent{
-  final int minutesDuration;
+  final String minutesDuration;
   const UpdateActivityMinutesDuration(this.minutesDuration);
 }
 
 class UpdateActivityWork extends TodayEvent{
-  final int work;
+  final String work;
   const UpdateActivityWork(this.work);
 }
 

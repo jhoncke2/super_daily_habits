@@ -236,7 +236,9 @@ void _testCreateActivity(){
     test('Debe emitir los siguientes estados en el orden esperado', ()async{
       final states = [
         OnLoadingTodayDay(),
-        OnTodayDay(today: updatedDay)
+        OnShowingTodayDay(
+          today: updatedDay
+        )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
       todayBloc.add(CreateActivity());

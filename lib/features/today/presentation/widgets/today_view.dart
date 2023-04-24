@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/presentation/widgets/activity_tile.dart';
 class TodayView extends StatelessWidget {
   final Day today;
   const TodayView({
@@ -18,8 +19,8 @@ class TodayView extends StatelessWidget {
         children: [
           Column(
             children: today.activities.map<Widget>(
-              (activity) => Text(
-                activity.name
+              (activity) => ActivityTile(
+                activity: activity
               )
             ).toList(),
           ),

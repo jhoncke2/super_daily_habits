@@ -105,9 +105,9 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
   @override
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities) => Day(
     id: jsonDay[database.idKey],
-    date: _getDateFromMap(
+    date: _getDateFromMap(jsonDecode(
       jsonDay[database.daysDateKey]
-    ),
+    )),
     activities: jsonActivities.map<HabitActivity>(
       (item) => HabitActivity(
         id: item[database.idKey],

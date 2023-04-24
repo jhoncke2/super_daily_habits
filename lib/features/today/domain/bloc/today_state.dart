@@ -17,7 +17,7 @@ class OnLoadingTodayDay extends TodayState {
 
 }
 
-class OnTodayDay extends TodayState{
+abstract class OnTodayDay extends TodayState{
   final Day today;
   const OnTodayDay({
     required this.today
