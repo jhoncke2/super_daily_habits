@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
+import 'package:super_daily_habits/common/presentation/widgets/error_panel.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator.dart';
@@ -29,30 +30,32 @@ class TodayLoaded extends StatelessWidget {
           Container(
             width: dimens.getWidthPercentage(1),
             padding: EdgeInsets.only(
-              left: dimens.scaffoldHorizontalPadding
+              left: dimens.scaffoldHorizontalPadding,
+              top: dimens.getHeightPercentage(0.01),
+              bottom: dimens.getHeightPercentage(0.01)
             ),
-            child: Container(
-              width: dimens.getWidthPercentage(0.3),
-              padding: EdgeInsets.only(
-                bottom: dimens.getHeightPercentage(0.01)
-              ),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.primary,
-                    width: 1.5
-                  )
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  offset: Offset(1, 2.5),
+                  blurRadius: 1,
+                  spreadRadius: 2
                 )
-              ),
+              ]
+            ),
+            child: SizedBox(
+              width: dimens.getWidthPercentage(0.3),
               child: Text(
                 utils.formatDate(today.date),
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   fontSize: dimens.normalTextSize,
                   color: AppColors.textPrimary
-                ),
-              ),
-            ),
+                )
+              )
+            )
           ),
           Visibility(
             visible: blocState is OnShowingTodayDay,
@@ -61,6 +64,13 @@ class TodayLoaded extends StatelessWidget {
           Visibility(
             visible: blocState is OnCreatingActivity,
             child: ActivityCreator()
+          ),
+          (
+            blocState is OnError?
+                ErrorPanel(
+                  errorTitle: (blocState as OnError).message
+                ):
+                Container()
           ),
           WorkBar()
         ]

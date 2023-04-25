@@ -23,6 +23,7 @@ class AppColors{
   static const primarySuperLight = Color.fromRGBO(89, 200, 230, 1);
   static const secondary = Color.fromRGBO(240, 240, 240, 1);
   static const secondaryLight = Color.fromRGBO(249, 249, 249, 1);
+  static const primaryDisabled = Color.fromRGBO(146, 165, 173, 1);
   static const textPrimary = Colors.black;
   static const textPrimaryDark = Colors.white;
   static const textSecondary = Colors.grey;
@@ -30,6 +31,7 @@ class AppColors{
   static const backgroundPrimary = Colors.white;
   static const backgroundSecondary = Color.fromRGBO(240, 240, 240, 1);
   static const iconPrimary = Color.fromRGBO(143, 171, 221, 1);
+  static const error = Colors.redAccent;
 }
 
 class AppDimens{
@@ -47,12 +49,12 @@ class AppDimens{
   double get scaffoldHorizontalPadding => _screenWidth * 0.03; 
   double get scaffoldVerticalPadding => _screenHeight * 0.01;
   double get normalContainerHorizontalMargin => _screenWidth * 0.022;
-  double get normalContainerVerticalMargin => _screenHeight * 0.011;
+  double get normalContainerVerticalMargin => _screenHeight * 0.0075;
   double get titleTextSize => 26;
   double get subtitleTextSize => 20;
   double get normalTextSize => 17;
   double get littleTextSize => 15;
-  double get littleIconSize => 22;
+  double get littleIconSize => 40;
   double get normalIconSize => 50;
   double get bigIconSize => 65;
   double getHeightPercentage(double perc) => _screenHeight * perc;

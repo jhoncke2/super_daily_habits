@@ -58,24 +58,74 @@ void _testGetDayByDate(){
   });
   
   group('Cuando todo sale bien', (){
-    late Map<String, dynamic> tJsonDay;
-    late Day tDay;
+    late int dayId;
+    late Map<String, dynamic> jsonDay;
+    late Day day;
+    late List<Map<String, dynamic>> jsonActivities;
+    late List<HabitActivity> tActivities;
     setUp((){
-      tDay = Day(
-        id: 0,
-        date: tDate,
-        activities: [],
-        work: 10
-      );
-      tJsonDay = {
-        idKey: 0,
+      dayId = 1005;
+      jsonDay = {
+        idKey: dayId,
         daysDateKey: tStringJsonDate,
         daysWorkKey: 10
       };
+      jsonActivities = [
+        {
+          'id': 100,
+          'name': 'ac_100',
+          'initial_time': '{...time...}',
+          'duration': 10,
+          'work': 10
+        },
+        {
+          'id': 101,
+          'name': 'ac_101',
+          'initial_time': '{...time...}',
+          'duration': 10,
+          'work': 11
+        }
+      ];
+      tActivities = const [
+        HabitActivity(
+          id: 100,
+          name: 'ac_100',
+          initialTime: CustomTime(
+            hour: 10,
+            minute: 10
+          ),
+          minutesDuration: 10,
+          work: 10
+        ),
+        HabitActivity(
+          id: 101,
+          name: 'ac_101',
+          initialTime: CustomTime(
+            hour: 11,
+            minute: 11
+          ),
+          minutesDuration: 10,
+          work: 11
+        )
+      ];
+      day = Day(
+        id: dayId,
+        date: tDate,
+        activities: tActivities,
+        work: 10
+      );
       when(dbManager.queryWhere(any, any, any))
-          .thenAnswer((_) async => [tJsonDay]);
-      when(adapter.getEmptyDayFromMap(any))
-          .thenReturn(tDay);
+          .thenAnswer((_) async => [jsonDay]);
+      when(dbManager.queryInnerJoin(
+        daysActivitiesTableName,
+        any,
+        activitiesTableName,
+        any,
+        any,
+        any
+      )).thenAnswer((_) async => jsonActivities);
+      when(adapter.getFilledDayWithActivitiesFromMap(any, any))
+          .thenReturn(day);
     });
 
     test('Debe llamar a los métodos esperados', ()async{
@@ -86,12 +136,20 @@ void _testGetDayByDate(){
         TodayLocalDataSourceImpl.dayByDateQuery,
         [tStringJsonDate]
       ));
-      verify(adapter.getEmptyDayFromMap(tJsonDay));
+      verify(dbManager.queryInnerJoin(
+        daysActivitiesTableName,
+        daysActivitiesActivityIdKey,
+        activitiesTableName,
+        idKey,
+        TodayLocalDataSourceImpl.dayByIdInnerJoinQuery,
+        [dayId]
+      ));
+      verify(adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities));
     });
 
     test('Debe retornar el resultado esperado', ()async{
       final result = await todayLocalDataSource.getDayFromDate(tDate);
-      expect(result, tDay);
+      expect(result, day);
     });
   });
 

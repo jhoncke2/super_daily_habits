@@ -48,7 +48,9 @@ class ActivityCreator extends StatelessWidget {
               onPressed: ()async{
                 final time = await showTimePicker(
                   context: context,
-                  initialTime: const TimeOfDay(hour: 0, minute: 0)
+                  initialTime: blocState.activity.initialTime == null?
+                      const TimeOfDay(hour: 0, minute: 0):
+                      utils.getTimeOfDayFromCustomTime(blocState.activity.initialTime!)
                 );
                 BlocProvider.of<TodayBloc>(context).add(UpdateActivityInitialTime(time));
               },

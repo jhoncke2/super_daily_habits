@@ -25,7 +25,16 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
       [stringJsonDate]
     );
     if(jsonDays.isNotEmpty){
-      return adapter.getEmptyDayFromMap(jsonDays[0]);
+      final jsonDay = jsonDays[0];
+      final jsonActivities = await dbManager.queryInnerJoin(
+        daysActivitiesTableName,
+        daysActivitiesActivityIdKey,
+        activitiesTableName,
+        idKey,
+        dayByIdInnerJoinQuery,
+        [jsonDay[idKey]]
+      );
+      return adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities);
     }else{
       throw const DBException(
         type: DBExceptionType.empty

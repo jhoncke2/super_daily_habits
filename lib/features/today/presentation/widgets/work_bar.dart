@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
+import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 class WorkBar extends StatelessWidget {
   const WorkBar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final blocState = BlocProvider.of<TodayBloc>(context).state as OnTodayDay;
     final dimens = AppDimens();
     return Container(
       width: dimens.getWidthPercentage(1),
@@ -27,14 +30,67 @@ class WorkBar extends StatelessWidget {
         ]
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
+          Text(
+            '${blocState.restantWork}/${blocState.today.work}'
+          ),
+          SizedBox(
+            width: dimens.getWidthPercentage(0.05),
+          ),
+          SizedBox(
             width: dimens.getWidthPercentage(0.25),
-            height: dimens.getHeightPercentage(0.025),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(25)
+            child: Stack(
+              children: [
+                Container(
+                  width: dimens.getWidthPercentage(
+                    0.25
+                  ),
+                  height: dimens.getHeightPercentage(0.025),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(50)
+                  )
+                ),
+                Container(
+                  width: dimens.getWidthPercentage(( 1 - (blocState.restantWork / blocState.today.work)) * 0.25),
+                  height: dimens.getHeightPercentage(0.025),
+                  margin: EdgeInsets.only(
+                    left: dimens.getWidthPercentage(0.25 - ( 1 - (blocState.restantWork / blocState.today.work)) * 0.25)
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white
+                  )
+                ),
+                Container(
+                  width: dimens.getWidthPercentage(0.25),
+                  height: dimens.getHeightPercentage(0.025),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(
+                      color: AppColors.primary,
+                      width: 1.5
+                    )
+                  ),
+                )
+              ],
             ),
+          ),
+          Expanded(
+            child: Container()
+          ),
+          InkWell(
+            onTap: blocState.restantWork > 0? (){
+              BlocProvider.of<TodayBloc>(context).add(InitActivityCreation());
+            } : null,
+            child: Icon(
+              Icons.add_rounded,
+              size: dimens.littleIconSize,
+              color: blocState.restantWork > 0?
+                AppColors.primary:
+                AppColors.primaryDisabled,
+            )
           )
         ],
       ),

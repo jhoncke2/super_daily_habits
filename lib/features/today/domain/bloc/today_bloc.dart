@@ -13,6 +13,7 @@ part 'today_state.dart';
 
 class TodayBloc extends Bloc<TodayEvent, TodayState> {
   static const unexpectedErrorMessage = 'Ha ocurdido un error inesperado';
+  static const insufficientRestantWorkMessage = 'No hay suficiente trabajo disponible';
   final TodayRepository repository;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
@@ -46,11 +47,24 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     emit(OnLoadingTodayDay());
     final currentDate = currentDateGetter.getCurrentDate();
     final today = await repository.getDayByDate(currentDate);
-    emit(OnShowingTodayDay(today: today));
+    final restantWork = _calculateRestantWork(today);
+    emit(OnShowingTodayDay(
+      today: today,
+      restantWork: restantWork
+    ));
+  }
+
+  int _calculateRestantWork(Day day){
+    final usedWork = day.activities.fold<int>(
+      0,
+      (previousValue, activity) => previousValue + activity.work
+    );
+    return day.work - usedWork;
   }
 
   void _initActivityCreation(Emitter<TodayState> emit){
-    final today = (state as OnTodayDay).today;
+    final initialState = state as OnTodayDay;
+    final today = initialState.today;
     const activity = HabitActivityCreation(
       name: '',
       initialTime: null,
@@ -61,6 +75,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     emit(OnCreatingActivity(
       today: today,
       activity: activity,
+      restantWork: initialState.restantWork,
       canEnd: canEnd
     ));
   }
@@ -75,6 +90,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     emit(OnCreatingActivity(
       today: initialState.today,
       activity: activity,
+      restantWork: initialState.restantWork,
       canEnd: canEnd
     ));
   }
@@ -94,6 +110,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       emit(OnCreatingActivity(
         today: initialState.today,
         activity: activity,
+        restantWork: initialState.restantWork,
         canEnd: canEnd
       ));
     }
@@ -110,6 +127,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       emit(OnCreatingActivity(
         today: initialState.today,
         activity: activity,
+        restantWork: initialState.restantWork,
         canEnd: canEnd
       ));
     }on Object catch(_){
@@ -128,6 +146,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       emit(OnCreatingActivity(
         today: initialState.today,
         activity: activity,
+        restantWork: initialState.restantWork,
         canEnd: canEnd
       ));
     }on Object catch(_){
@@ -138,18 +157,32 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   Future<void> _createActivity(Emitter<TodayState> emit)async{
     final initialState = (state as OnCreatingActivity);
     try{
-      emit(OnLoadingTodayDay());
-      final updatedDay = await repository.setActivityToDay(
-        initialState.activity,
-        initialState.today
-      );
-      emit(OnShowingTodayDay(
-        today: updatedDay
-      ));
+      final activity = initialState.activity;
+      if(activity.work <= initialState.restantWork){
+        emit(OnLoadingTodayDay());
+        final updatedDay = await repository.setActivityToDay(
+          activity,
+          initialState.today
+        );
+        final restantWork = _calculateRestantWork(updatedDay);
+        emit(OnShowingTodayDay(
+          today: updatedDay,
+          restantWork: restantWork
+        ));
+      }else{
+        emit(OnCreatingActivityError(
+          today: initialState.today,
+          activity: initialState.activity,
+          restantWork: initialState.restantWork,
+          canEnd: initialState.canEnd,
+          message: insufficientRestantWorkMessage
+        ));
+      }
     }on AppException catch(exception){
       emit(OnCreatingActivityError(
         today: initialState.today,
         activity: initialState.activity,
+        restantWork: initialState.restantWork,
         canEnd: initialState.canEnd,
         message: exception.message.isNotEmpty? exception.message : unexpectedErrorMessage
       ));
@@ -159,7 +192,8 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   void _cancelActivityCreation(Emitter<TodayState> emit){
     final initialState = (state as OnCreatingActivity);
     emit(OnShowingTodayDay(
-      today: initialState.today
+      today: initialState.today,
+      restantWork: initialState.restantWork
     ));
   }
 

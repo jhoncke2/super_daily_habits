@@ -14,9 +14,10 @@ class ActivityTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final dimens = AppDimens();
     return Container(
-      height: dimens.getHeightPercentage(0.075),
+      height: dimens.getHeightPercentage(0.085),
       padding: EdgeInsets.symmetric(
-        horizontal: dimens.getWidthPercentage(0.05)
+        horizontal: dimens.getWidthPercentage(0.05),
+        vertical: dimens.getHeightPercentage(0.01)
       ),
       decoration: const BoxDecoration(
         border: Border(
@@ -32,16 +33,46 @@ class ActivityTile extends StatelessWidget {
         children: [
           SizedBox(
             width: dimens.getWidthPercentage(0.3),
-            child: Text(
-              utils.formatTime(
-                activity.initialTime
-              ),
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: dimens.titleTextSize,
-                color: AppColors.textPrimary.withOpacity(0.75)
-              ),
-            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  utils.formatTime(
+                    activity.initialTime
+                  ),
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: dimens.subtitleTextSize,
+                    color: AppColors.textPrimary.withOpacity(0.75)
+                  )
+                ),
+                SizedBox(
+                  width: dimens.getWidthPercentage(0.175),
+                  child: const Divider(
+                    color: AppColors.textPrimary,
+                    thickness: 0.75,
+                    height: 2,
+                  ),
+                ),
+                Text(
+                  utils.formatTime(
+                    utils.getFinalHour(
+                      activity.initialTime,
+                      activity.minutesDuration
+                    )
+                  ),
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: dimens.subtitleTextSize,
+                    color: AppColors.textPrimary.withOpacity(0.75)
+                  )
+                )
+              ]
+            )
           ),
           SizedBox(
             width: dimens.getWidthPercentage(0.5),

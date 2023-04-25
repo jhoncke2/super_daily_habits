@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/fake/data_base_injecter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
@@ -20,6 +21,7 @@ Future<void> init() async {
       db: db
     )
   );
+  //await _clearDataBase(db);
   sl.registerLazySingleton<TodayLocalAdapter>(
     () => TodayLocalAdapterImpl()
   );
@@ -52,3 +54,8 @@ Future<void> init() async {
   );
 }
 
+Future<void> _clearDataBase(Database db)async{
+  await db.delete(daysActivitiesTableName);
+  await db.delete(activitiesTableName);
+  await db.delete(daysTableName);
+}

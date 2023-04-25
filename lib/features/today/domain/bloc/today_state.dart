@@ -4,7 +4,7 @@ abstract class TodayState extends Equatable {
   const TodayState();
   
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class TodayInitial extends TodayState {}
@@ -19,18 +19,22 @@ class OnLoadingTodayDay extends TodayState {
 
 abstract class OnTodayDay extends TodayState{
   final Day today;
+  final int restantWork;
   const OnTodayDay({
-    required this.today
+    required this.today,
+    required this.restantWork
   });
   @override
-  List<Object> get props => [
-    today
+  List<Object?> get props => [
+    today,
+    restantWork
   ];
 }
 
 class OnShowingTodayDay extends OnTodayDay{
   const OnShowingTodayDay({
-    required super.today
+    required super.today,
+    required super.restantWork
   });
 }
 
@@ -39,10 +43,11 @@ class OnShowingTodayDayError extends OnShowingTodayDay implements OnError{
   final String message;
   const OnShowingTodayDayError({
     required super.today,
-    required this.message
+    required this.message,
+    required super.restantWork
   });
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     message
   ];
 }
@@ -53,6 +58,7 @@ class OnCreatingActivity extends OnTodayDay{
   const OnCreatingActivity({
     required super.today,
     required this.activity,
+    required super.restantWork,
     required this.canEnd
   });
   @override
@@ -68,6 +74,7 @@ class OnCreatingActivityError extends OnCreatingActivity implements OnError{
   const OnCreatingActivityError({
     required super.today,
     required super.activity,
+    required super.restantWork,
     required super.canEnd,
     required this.message
   });

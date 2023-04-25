@@ -60,12 +60,34 @@ void _testLoadDayByCurrentDate(){
       currentDay = Day(
         id: 100,
         date: currentDate,
-        activities: [],
+        activities: const [
+          HabitActivity(
+            id: 0,
+            name: 'ac_0', 
+            minutesDuration: 10, 
+            work: 2, 
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 20
+            )
+          ),
+          HabitActivity(
+            id: 1,
+            name: 'ac_1', 
+            minutesDuration: 20, 
+            work: 3, 
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 20
+            )
+          )
+        ],
         work: 10
       );
       when(todayRepository.getDayByDate(any))
           .thenAnswer((_) async => currentDay);
     });
+    
     test('Debe llamar los métodos esperados', ()async{
       todayBloc.add(LoadDayByCurrentDate());
       await untilCalled(currentDateGetter.getCurrentDate());
@@ -73,10 +95,14 @@ void _testLoadDayByCurrentDate(){
       await untilCalled(todayRepository.getDayByDate(any));
       verify(todayRepository.getDayByDate(currentDate));
     });
-    test('Debe emitir los siguientes estados en el orden esperado', ()async{
+    test('''Debe emitir los siguientes estados en el orden esperado
+    con un restantWork de 5''', ()async{
       final states = [
         OnLoadingTodayDay(),
-        OnShowingTodayDay(today: currentDay)
+        OnShowingTodayDay(
+          today: currentDay,
+          restantWork: 5
+        )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
       todayBloc.add(LoadDayByCurrentDate());
@@ -88,6 +114,7 @@ void _testUpdateActivityInitialTime(){
   late Day currentDay;
   late TimeOfDay? time;
   late HabitActivityCreation initActivity;
+  late int tRestantWork;
   setUp((){
     currentDay = Day(
       id: 100,
@@ -103,9 +130,11 @@ void _testUpdateActivityInitialTime(){
       minutesDuration: 10,
       work: 1
     );
+    tRestantWork = 10;
     todayBloc.emit(OnCreatingActivity(
       today: currentDay,
       activity: initActivity,
+      restantWork: tRestantWork,
       canEnd: false
     ));
     when(todayRepository.getDayByDate(any))
@@ -142,6 +171,7 @@ void _testUpdateActivityInitialTime(){
         OnCreatingActivity(
           today: currentDay,
           activity: updatedActivity,
+          restantWork: tRestantWork,
           canEnd: true
         )
       ];
@@ -157,6 +187,7 @@ void _testUpdateActivityInitialTime(){
         OnCreatingActivity(
           today: currentDay,
           activity: updatedActivity,
+          restantWork: tRestantWork,
           canEnd: false
         )
       ];
@@ -177,6 +208,7 @@ void _testCreateActivity(){
   late CustomDate dayDate;
   late Day initDay;
   late HabitActivityCreation activity;
+  late int initRestantWork;
   setUp((){
     dayDate = CustomDate.fromDateTime(
       DateTime.now()
@@ -194,34 +226,47 @@ void _testCreateActivity(){
         minute: 10
       ),
       minutesDuration: 10,
-      work: 20
+      work: 10
     );
-    todayBloc.emit(OnCreatingActivity(
-      today: initDay,
-      activity: activity,
-      canEnd: true
-    ));
+    
   });
 
   group('Cuando todo sale bien', (){
     late Day updatedDay;
     setUp((){
+      initRestantWork = 11;
+      todayBloc.emit(OnCreatingActivity(
+        today: initDay,
+        activity: activity,
+        restantWork: initRestantWork,
+        canEnd: true
+      ));
       updatedDay = Day(
         id: 0,
         date: dayDate,
         activities: const [
           HabitActivity(
-            id: 1000,
-            name: 'act_x',
+            id: 0,
+            name: 'ac_0', 
+            minutesDuration: 10, 
+            work: 8, 
             initialTime: CustomTime(
-              hour: 20,
-              minute: 10
-            ),
-            minutesDuration: 10,
-            work: 20
+              hour: 10,
+              minute: 20
+            )
+          ),
+          HabitActivity(
+            id: 1,
+            name: 'ac_1', 
+            minutesDuration: 20, 
+            work: 3, 
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 20
+            )
           )
         ],
-        work: 10
+        work: 20
       );
       when(todayRepository.setActivityToDay(any, any))
           .thenAnswer((_) async => updatedDay);
@@ -233,11 +278,13 @@ void _testCreateActivity(){
       verify(todayRepository.setActivityToDay(activity, initDay));
     });
 
-    test('Debe emitir los siguientes estados en el orden esperado', ()async{
+    test('''Debe emitir los siguientes estados en el orden esperado
+    con un restant work de 9''', ()async{
       final states = [
         OnLoadingTodayDay(),
         OnShowingTodayDay(
-          today: updatedDay
+          today: updatedDay,
+          restantWork: 9
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -245,8 +292,37 @@ void _testCreateActivity(){
     });
   });
 
+  test('''Debe emitir los siguientes estados en el orden esperado cuando
+  la cantidad de trabajo de la actividad supera a la restante''', ()async{
+    initRestantWork = 9;
+    todayBloc.emit(OnCreatingActivity(
+      today: initDay,
+      activity: activity,
+      restantWork: initRestantWork,
+      canEnd: true
+    ));
+    final states = [
+      OnCreatingActivityError(
+        today: initDay,
+        activity: activity,
+        restantWork: initRestantWork,
+        canEnd: true,
+        message: TodayBloc.insufficientRestantWorkMessage
+      )
+    ];
+    expectLater(todayBloc.stream, emitsInOrder(states));
+    todayBloc.add(CreateActivity());
+  });
+
   test('''Debe emitir los siguientes estados en el orden esperados
-  cuando ocurre un AppException <con> menesaje''', ()async{
+  cuando ocurre un AppException <con> mensaje''', ()async{
+    initRestantWork = 11;
+    todayBloc.emit(OnCreatingActivity(
+      today: initDay,
+      activity: activity,
+      restantWork: initRestantWork,
+      canEnd: true
+    ));
     const message = 'error_message';
     when(todayRepository.setActivityToDay(any, any))
         .thenThrow(const DBException(
@@ -258,6 +334,7 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         today: initDay,
         activity: activity,
+        restantWork: initRestantWork,
         canEnd: true,
         message: message
       )
@@ -267,7 +344,14 @@ void _testCreateActivity(){
   });
   
   test('''Debe emitir los siguientes estados en el orden esperados
-  cuando ocurre un AppException <sin> menesaje''', ()async{
+  cuando ocurre un AppException <sin> mensaje''', ()async{
+    initRestantWork = 11;
+    todayBloc.emit(OnCreatingActivity(
+      today: initDay,
+      activity: activity,
+      restantWork: initRestantWork,
+      canEnd: true
+    ));
     when(todayRepository.setActivityToDay(any, any))
         .thenThrow(const DBException(
           message: '',
@@ -278,6 +362,7 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         today: initDay,
         activity: activity,
+        restantWork: initRestantWork,
         canEnd: true,
         message: TodayBloc.unexpectedErrorMessage
       )

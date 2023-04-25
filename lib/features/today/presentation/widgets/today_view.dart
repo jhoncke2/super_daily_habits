@@ -1,42 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
-import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_tile.dart';
 class TodayView extends StatelessWidget {
+  late ScrollController activitiesController;
   final Day today;
-  const TodayView({
+  TodayView({
     Key? key,
     required this.today
-  }) : super(key: key);
+  }) : super(key: key){
+    activitiesController = ScrollController();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dimens = AppDimens();
     return Expanded(
       child: Column(
         children: [
-          Column(
-            children: today.activities.map<Widget>(
-              (activity) => ActivityTile(
-                activity: activity
-              )
-            ).toList(),
-          ),
           Expanded(
-            child: Container()
+            child: Scrollbar(
+              controller: activitiesController,
+              thumbVisibility: true,
+              child: ListView(
+                controller: activitiesController,
+                children: today.activities.map<Widget>(
+                  (activity) => ActivityTile(
+                    activity: activity
+                  )
+                ).toList(),
+              ),
+            ),
           ),
-          InkWell(
-            onTap: (){
-              BlocProvider.of<TodayBloc>(context).add(InitActivityCreation());
-            },
-            child: Icon(
-              Icons.add_rounded,
-              size: dimens.bigIconSize,
-              color: AppColors.primary,
-            )
-          )
+          
         ],
       ),
     );

@@ -15,7 +15,7 @@ class DataBaseInjecter{
     final day = DayCreation(
       date: CustomDate.fromDateTime(date),
       activities: [],
-      work: 0
+      work: 100
     );
     final jsonDay = adapter.getMapFromDay(day);
     await databaseManager.insert(
