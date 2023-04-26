@@ -31,7 +31,8 @@ class ErrorPanel extends StatelessWidget {
         right: dimens.getWidthPercentage(0.01)
       ),
       padding: EdgeInsets.symmetric(
-        vertical: dimens.scaffoldVerticalPadding
+        vertical: dimens.scaffoldVerticalPadding,
+        horizontal: dimens.getWidthPercentage(0.015)
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,

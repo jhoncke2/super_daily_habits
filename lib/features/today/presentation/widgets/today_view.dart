@@ -15,24 +15,18 @@ class TodayView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Expanded(
-            child: Scrollbar(
-              controller: activitiesController,
-              thumbVisibility: true,
-              child: ListView(
-                controller: activitiesController,
-                children: today.activities.map<Widget>(
-                  (activity) => ActivityTile(
-                    activity: activity
-                  )
-                ).toList(),
-              ),
-            ),
-          ),
-          
-        ],
+      child: Scrollbar(
+        controller: activitiesController,
+        thumbVisibility: true,
+        child: ListView(
+          padding: const EdgeInsets.all(0),
+          controller: activitiesController,
+          children: today.activities.map<Widget>(
+            (activity) => ActivityTile(
+              activity: activity
+            )
+          ).toList(),
+        ),
       ),
     );
   }

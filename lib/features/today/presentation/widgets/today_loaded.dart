@@ -25,7 +25,7 @@ class TodayLoaded extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            height: dimens.getHeightPercentage(0.02)
+            height: dimens.getHeightPercentage(0.03)
           ),
           Container(
             width: dimens.getWidthPercentage(1),

@@ -274,64 +274,68 @@ void _testUpdateActivityInitialTime(){
     late HabitActivityCreation updatedActivity;
     late List<HabitActivity> dayActivities;
 
-    group('Cuando el initialTime está fuera de todos los rangos de duración de las demás activities', (){
-      setUp((){
-        time = const TimeOfDay(
-          hour: 11,
-          minute: 06
-        );
-        formattedTime = const CustomTime(
-          hour: 11,
-          minute: 06
-        );
-        updatedActivity = HabitActivityCreation(
-          name: 'act_x',
-          initialTime: formattedTime,
-          minutesDuration: 10,
-          work: 1
-        );
-        dayActivities = const [
-          HabitActivity(
-            id: 0,
-            name: 'ac_0',
-            minutesDuration: 50,
-            work: 10,
-            initialTime: CustomTime(
-              hour: 10,
-              minute: 15
-            )
-          ),
-          HabitActivity(
-            id: 1,
-            name: 'ac_1',
-            minutesDuration: 120,
-            work: 7,
-            initialTime: CustomTime(
-              hour: 15,
-              minute: 20
-            )
+    setUp((){
+      time = const TimeOfDay(
+        hour: 11,
+        minute: 06
+      );
+      formattedTime = const CustomTime(
+        hour: 11,
+        minute: 06
+      );
+      updatedActivity = HabitActivityCreation(
+        name: 'act_x',
+        initialTime: formattedTime,
+        minutesDuration: 10,
+        work: 1
+      );
+      dayActivities = const [
+        HabitActivity(
+          id: 0,
+          name: 'ac_0',
+          minutesDuration: 50,
+          work: 10,
+          initialTime: CustomTime(
+            hour: 10,
+            minute: 15
           )
-        ];
-        currentDay = Day(
-          id: 100,
-          date: CustomDate.fromDateTime(
-            DateTime.now()
-          ),
-          activities: dayActivities,
-          work: 10
-        );
-        todayBloc.emit(OnCreatingActivity(
-          today: currentDay,
-          activity: initActivity,
-          restantWork: tRestantWork,
-          canEnd: false
-        ));
+        ),
+        HabitActivity(
+          id: 1,
+          name: 'ac_1',
+          minutesDuration: 120,
+          work: 7,
+          initialTime: CustomTime(
+            hour: 15,
+            minute: 20
+          )
+        )
+      ];
+      currentDay = Day(
+        id: 100,
+        date: CustomDate.fromDateTime(
+          DateTime.now()
+        ),
+        activities: dayActivities,
+        work: 10
+      );
+      todayBloc.emit(OnCreatingActivity(
+        today: currentDay,
+        activity: initActivity,
+        restantWork: tRestantWork,
+        canEnd: false
+      ));
+    });
+
+    group('cuando el initialTime <no> está dentro de alguno de los rangos de duración de las demás activities', (){
+      setUp((){
         when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
-            .thenReturn(false);
+          .thenReturn(false);
       });
+
       test('Debe llamar los métodos esperados', ()async{
         when(activityCompletitionValidator.isCompleted(any))
-            .thenReturn(true);
+          .thenReturn(true);
         todayBloc.add(UpdateActivityInitialTime(time));
         await untilCalled(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any));
         verify(timeRangeCalificator.timeIsBetweenTimeRange(
@@ -381,69 +385,25 @@ void _testUpdateActivityInitialTime(){
         todayBloc.add(UpdateActivityInitialTime(time));
       });
     });
+    
+
     test('''Debe emitir los siguientes estados en el orden esperado
-      cuando el initialTime está dentro de uno de los rangos de duración de las demás activities''', ()async{
-        time = const TimeOfDay(
-          hour: 11,
-          minute: 05
-        );
-        formattedTime = const CustomTime(
-          hour: 11,
-          minute: 05
-        );
-        updatedActivity = HabitActivityCreation(
-          name: 'act_x',
-          initialTime: formattedTime,
-          minutesDuration: 10,
-          work: 1
-        );
-        currentDay = Day(
-          id: 100,
-          date: CustomDate.fromDateTime(
-            DateTime.now()
-          ),
-          activities: const [
-            HabitActivity(
-              id: 0,
-              name: 'ac_0',
-              minutesDuration: 50,
-              work: 10,
-              initialTime: CustomTime(
-                hour: 10,
-                minute: 15
-              )
-            ),
-            HabitActivity(
-              id: 1,
-              name: 'ac_1',
-              minutesDuration: 120,
-              work: 7,
-              initialTime: CustomTime(
-                hour: 15,
-                minute: 20
-              )
-            )
-          ],
-          work: 10
-        );
-        todayBloc.emit(OnCreatingActivity(
+    cuando el initialTime está dentro de uno de los rangos de duración de las demás activities''', ()async{
+      final timeResponses = [false, true];
+      when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
+        .thenAnswer( (_) => timeResponses.removeAt(0));
+      final states = [
+        OnCreatingActivityError(
           today: currentDay,
-          activity: initActivity,
+          activity: updatedActivity,
           restantWork: tRestantWork,
-          canEnd: false
-        ));
-        final states = [
-          OnCreatingActivityError(
-            today: currentDay,
-            activity: updatedActivity,
-            restantWork: tRestantWork,
-            canEnd: true,
-            message: TodayBloc.initialTimeIsOnAnotherActivityRangeMessage
-          )
-        ];
-        //expectLater(todayBloc.stream, emitsInOrder(states));
-        //todayBloc.add(UpdateActivityInitialTime(time));
-      });
+          canEnd: false,
+          message: TodayBloc.initialTimeIsOnAnotherActivityRangeMessage
+        )
+      ];
+      expectLater(todayBloc.stream, emitsInOrder(states));
+      todayBloc.add(UpdateActivityInitialTime(time));
+    });
   });
 
   test('''Debe emitir los siguientes estados en el orden esperado

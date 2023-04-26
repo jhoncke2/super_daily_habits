@@ -120,26 +120,37 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         hour: event.initialTime!.hour,
         minute: event.initialTime!.minute
       );
-      //TODO: Implementar caso de cuando el nuevo initial time está dentro de uno de los rangos de las demás activities
       final activities = initialState.today.activities;
-      for (var activity in activities) {
-        timeRangeCalificator.timeIsBetweenTimeRange(
+      bool timeIsBetweenAnyActivityRange = false;
+      for(int i = 0; i < activities.length && !timeIsBetweenAnyActivityRange; i++){
+        final currentActivity = activities[i];
+        timeIsBetweenAnyActivityRange |= timeRangeCalificator.timeIsBetweenTimeRange(
           formattedInitialTime,
-          activity.initialTime,
-          activity.minutesDuration
+          currentActivity.initialTime,
+          currentActivity.minutesDuration
         );
       }
-      final activity = _getActivityCreationFromExistent(
-        initialState.activity,
-        initialTime: formattedInitialTime
-      );
-      final canEnd = activityCompletitionValidator.isCompleted(activity);
-      emit(OnCreatingActivity(
-        today: initialState.today,
-        activity: activity,
-        restantWork: initialState.restantWork,
-        canEnd: canEnd
-      ));
+      if(timeIsBetweenAnyActivityRange){
+        emit(OnCreatingActivityError(
+          today: initialState.today,
+          activity: initialState.activity,
+          restantWork: initialState.restantWork,
+          canEnd: initialState.canEnd,
+          message: initialTimeIsOnAnotherActivityRangeMessage
+        ));
+      }else{
+        final activity = _getActivityCreationFromExistent(
+          initialState.activity,
+          initialTime: formattedInitialTime
+        );
+        final canEnd = activityCompletitionValidator.isCompleted(activity);
+        emit(OnCreatingActivity(
+          today: initialState.today,
+          activity: activity,
+          restantWork: initialState.restantWork,
+          canEnd: canEnd
+        ));
+      }
     }
   }
 
