@@ -7,6 +7,7 @@ import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/today_repository.dart';
 part 'today_event.dart';
 part 'today_state.dart';
@@ -14,13 +15,18 @@ part 'today_state.dart';
 class TodayBloc extends Bloc<TodayEvent, TodayState> {
   static const unexpectedErrorMessage = 'Ha ocurdido un error inesperado';
   static const insufficientRestantWorkMessage = 'No hay suficiente trabajo disponible';
+  static const dayTimeFilledMessage = 'El tiempo del día está completamente lleno';
+  static const initialTimeIsOnAnotherActivityRangeMessage = 'El tiempo elegido colisiona con el rango de tiempo de otra actividad';
+  static const maxDayMinutes = 1440;
   final TodayRepository repository;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
+  final TimeRangeCalificator timeRangeCalificator;
   TodayBloc({
     required this.repository,
     required this.currentDateGetter,
-    required this.activityCompletitionValidator
+    required this.activityCompletitionValidator,
+    required this.timeRangeCalificator
   }) : super(TodayInitial()) {
     on<TodayEvent>((event, emit)async{
       if(event is LoadDayByCurrentDate){
@@ -64,20 +70,32 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
 
   void _initActivityCreation(Emitter<TodayState> emit){
     final initialState = state as OnTodayDay;
-    final today = initialState.today;
-    const activity = HabitActivityCreation(
-      name: '',
-      initialTime: null,
-      minutesDuration: 0,
-      work: 0
+    final totalDuration = initialState.today.activities.fold<int>(
+      0,
+      (previousValue, activity) => previousValue + activity.minutesDuration
     );
-    final canEnd = activityCompletitionValidator.isCompleted(activity);
-    emit(OnCreatingActivity(
-      today: today,
-      activity: activity,
-      restantWork: initialState.restantWork,
-      canEnd: canEnd
-    ));
+    if(totalDuration < maxDayMinutes){
+      final today = initialState.today;
+      const activity = HabitActivityCreation(
+        name: '',
+        initialTime: null,
+        minutesDuration: 0,
+        work: 0
+      );
+      final canEnd = activityCompletitionValidator.isCompleted(activity);
+      emit(OnCreatingActivity(
+        today: today,
+        activity: activity,
+        restantWork: initialState.restantWork,
+        canEnd: canEnd
+      ));
+    }else{
+      emit(OnShowingTodayDayError(
+        today: initialState.today,
+        restantWork: initialState.restantWork,
+        message: dayTimeFilledMessage
+      ));
+    }
   }
 
   void _updateActivityName(Emitter<TodayState> emit, UpdateActivityName event){
@@ -102,6 +120,15 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         hour: event.initialTime!.hour,
         minute: event.initialTime!.minute
       );
+      //TODO: Implementar caso de cuando el nuevo initial time está dentro de uno de los rangos de las demás activities
+      final activities = initialState.today.activities;
+      for (var activity in activities) {
+        timeRangeCalificator.timeIsBetweenTimeRange(
+          formattedInitialTime,
+          activity.initialTime,
+          activity.minutesDuration
+        );
+      }
       final activity = _getActivityCreationFromExistent(
         initialState.activity,
         initialTime: formattedInitialTime

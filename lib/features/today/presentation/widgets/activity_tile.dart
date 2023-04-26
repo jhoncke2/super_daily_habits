@@ -3,6 +3,7 @@ import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/work_pill.dart';
 import '../utils.dart' as utils;
+
 class ActivityTile extends StatelessWidget {
   final HabitActivity activity;
   const ActivityTile({

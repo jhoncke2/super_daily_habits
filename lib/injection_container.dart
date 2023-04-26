@@ -9,6 +9,7 @@ import 'package:super_daily_habits/features/today/data/today_repository_impl.dar
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/today_repository.dart';
 
 final sl = GetIt.instance;
@@ -45,11 +46,13 @@ Future<void> init() async {
   );
   final currentDateGetter = CurrentDateGetterImpl();
   final activityCompletitionValidator = ActivityCompletitionValidatorImpl();
+  final timeRangeCalificator = TimeRangeCalificatorImpl();
   sl.registerFactory<TodayBloc>(
     () => TodayBloc(
       repository: sl<TodayRepository>(),
       currentDateGetter: currentDateGetter,
-      activityCompletitionValidator: activityCompletitionValidator
+      activityCompletitionValidator: activityCompletitionValidator,
+      timeRangeCalificator: timeRangeCalificator
     )
   );
 }

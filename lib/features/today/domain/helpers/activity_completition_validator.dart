@@ -11,5 +11,4 @@ class ActivityCompletitionValidatorImpl implements ActivityCompletitionValidator
     && activity.initialTime != null
     && activity.minutesDuration > 0
     && activity.work > 0;
-
 }

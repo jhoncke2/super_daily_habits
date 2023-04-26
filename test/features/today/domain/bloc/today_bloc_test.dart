@@ -11,32 +11,38 @@ import 'package:super_daily_habits/features/today/domain/entities/custom_time.da
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/today_repository.dart';
-import 'dotay_bloc_test.mocks.dart';
+import 'today_bloc_test.mocks.dart';
 
 late TodayBloc todayBloc;
 late MockTodayRepository todayRepository;
 late MockCurrentDateGetter currentDateGetter;
 late MockActivityCompletitionValidator activityCompletitionValidator;
+late MockTimeRangeCalificator timeRangeCalificator;
 
 @GenerateMocks([
   TodayRepository,
   CurrentDateGetter,
-  ActivityCompletitionValidator
+  ActivityCompletitionValidator,
+  TimeRangeCalificator
 ])
 void main(){
   setUp((){
+    timeRangeCalificator = MockTimeRangeCalificator();
     activityCompletitionValidator = MockActivityCompletitionValidator();
     currentDateGetter = MockCurrentDateGetter();
     todayRepository = MockTodayRepository();
     todayBloc = TodayBloc(
       repository: todayRepository,
       currentDateGetter: currentDateGetter,
-      activityCompletitionValidator: activityCompletitionValidator
+      activityCompletitionValidator: activityCompletitionValidator,
+      timeRangeCalificator: timeRangeCalificator
     );
   });
 
   group('load day by current date', _testLoadDayByCurrentDate);
+  group('init activity creation', _testInitActivityCreation);
   group('update activity initial time', _testUpdateActivityInitialTime);
   group('create activity', _testCreateActivity);
 }
@@ -110,12 +116,338 @@ void _testLoadDayByCurrentDate(){
   });
 }
 
+void _testInitActivityCreation(){
+  late Day today;
+  late int restantWorK;
+  
+  group('Cuando aún hay espacio en el tiempo del día para llenar', (){
+    late HabitActivityCreation activity;
+    setUp((){
+      restantWorK = 20;
+      today = Day(
+        id: 0,
+        date: CustomDate.fromDateTime(
+          DateTime.now()
+        ),
+        activities: const [
+          HabitActivity(
+            id: 100,
+            name: 'act_x0',
+            minutesDuration: 25,
+            work: 10,
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 10
+            )
+          ),
+          HabitActivity(
+            id: 101,
+            name: 'act_x1',
+            minutesDuration: 250,
+            work: 20,
+            initialTime: CustomTime(
+              hour: 11,
+              minute: 20
+            )
+          )
+        ],
+        work: 50
+      );
+      activity = const HabitActivityCreation(
+        name: '',
+        initialTime: null,
+        minutesDuration: 0,
+        work: 0
+      );
+      todayBloc.emit(OnShowingTodayDay(
+        today: today,
+        restantWork: restantWorK
+      ));
+    });
+
+    test('Debe llamar los métodos esperados', ()async{
+      when(activityCompletitionValidator.isCompleted(any))
+          .thenReturn(false);
+      todayBloc.add(InitActivityCreation());
+      await untilCalled(activityCompletitionValidator.isCompleted(any));
+      verify(activityCompletitionValidator.isCompleted(activity));
+    });
+
+    test('''Debe emitir los siguientes estados en el orden esperado
+    activity no está completa''', ()async{
+      when(activityCompletitionValidator.isCompleted(any))
+          .thenReturn(false);
+      final states = [
+        OnCreatingActivity(
+          today: today,
+          activity: activity,
+          restantWork: restantWorK,
+          canEnd: false
+        )
+      ];
+      expectLater(todayBloc.stream, emitsInOrder(states));
+      todayBloc.add(InitActivityCreation());
+    });
+  });
+
+  group('Cuando ya no hay espacio en el tiempo del día para llenar', (){
+    late HabitActivityCreation activity;
+    setUp((){
+      restantWorK = 0;
+      today = Day(
+        id: 0,
+        date: CustomDate.fromDateTime(
+          DateTime.now()
+        ),
+        activities: const [
+          HabitActivity(
+            id: 100,
+            name: 'act_x0',
+            minutesDuration: 900,
+            work: 30,
+            initialTime: CustomTime(
+              hour: 00,
+              minute: 00
+            )
+          ),
+          HabitActivity(
+            id: 101,
+            name: 'act_x1',
+            minutesDuration: 540,
+            work: 20,
+            initialTime: CustomTime(
+              hour: 15,
+              minute: 00
+            )
+          )
+        ],
+        work: 50
+      );
+      activity = const HabitActivityCreation(
+        name: '',
+        initialTime: null,
+        minutesDuration: 0,
+        work: 0
+      );
+      todayBloc.emit(OnShowingTodayDay(
+        today: today,
+        restantWork: restantWorK
+      ));
+    });
+
+    test('''Debe emitir los siguientes estados en el orden esperado
+    activity no está completa''', ()async{
+      when(activityCompletitionValidator.isCompleted(any))
+          .thenReturn(false);
+      final states = [
+        OnShowingTodayDayError(
+          today: today,
+          restantWork: restantWorK,
+          message: TodayBloc.dayTimeFilledMessage
+        )
+      ];
+      expectLater(todayBloc.stream, emitsInOrder(states));
+      todayBloc.add(InitActivityCreation());
+    });
+  });
+}
+
 void _testUpdateActivityInitialTime(){
   late Day currentDay;
   late TimeOfDay? time;
   late HabitActivityCreation initActivity;
   late int tRestantWork;
   setUp((){
+    initActivity = const HabitActivityCreation(
+      name: 'act_x',
+      initialTime: null,
+      minutesDuration: 10,
+      work: 1
+    );
+    tRestantWork = 10;
+    when(todayRepository.getDayByDate(any))
+        .thenAnswer((_) async => currentDay);
+  });
+
+  group('Cuando el date es != null', (){
+    late CustomTime formattedTime;
+    late HabitActivityCreation updatedActivity;
+    late List<HabitActivity> dayActivities;
+
+    group('Cuando el initialTime está fuera de todos los rangos de duración de las demás activities', (){
+      setUp((){
+        time = const TimeOfDay(
+          hour: 11,
+          minute: 06
+        );
+        formattedTime = const CustomTime(
+          hour: 11,
+          minute: 06
+        );
+        updatedActivity = HabitActivityCreation(
+          name: 'act_x',
+          initialTime: formattedTime,
+          minutesDuration: 10,
+          work: 1
+        );
+        dayActivities = const [
+          HabitActivity(
+            id: 0,
+            name: 'ac_0',
+            minutesDuration: 50,
+            work: 10,
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 15
+            )
+          ),
+          HabitActivity(
+            id: 1,
+            name: 'ac_1',
+            minutesDuration: 120,
+            work: 7,
+            initialTime: CustomTime(
+              hour: 15,
+              minute: 20
+            )
+          )
+        ];
+        currentDay = Day(
+          id: 100,
+          date: CustomDate.fromDateTime(
+            DateTime.now()
+          ),
+          activities: dayActivities,
+          work: 10
+        );
+        todayBloc.emit(OnCreatingActivity(
+          today: currentDay,
+          activity: initActivity,
+          restantWork: tRestantWork,
+          canEnd: false
+        ));
+        when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
+            .thenReturn(false);
+      });
+      test('Debe llamar los métodos esperados', ()async{
+        when(activityCompletitionValidator.isCompleted(any))
+            .thenReturn(true);
+        todayBloc.add(UpdateActivityInitialTime(time));
+        await untilCalled(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any));
+        verify(timeRangeCalificator.timeIsBetweenTimeRange(
+          formattedTime,
+          dayActivities[0].initialTime,
+          dayActivities[0].minutesDuration
+        ));
+        await untilCalled(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any));
+        verify(timeRangeCalificator.timeIsBetweenTimeRange(
+          formattedTime,
+          dayActivities[1].initialTime,
+          dayActivities[1].minutesDuration
+        ));
+        await untilCalled(activityCompletitionValidator.isCompleted(any));
+        verify(activityCompletitionValidator.isCompleted(updatedActivity));
+      });
+
+      test('''Debe emitir los siguientes estados en el orden esperado
+      cuando el activity <sí> está completo''', ()async{
+        when(activityCompletitionValidator.isCompleted(any))
+            .thenReturn(true);
+        final states = [
+          OnCreatingActivity(
+            today: currentDay,
+            activity: updatedActivity,
+            restantWork: tRestantWork,
+            canEnd: true
+          )
+        ];
+        expectLater(todayBloc.stream, emitsInOrder(states));
+        todayBloc.add(UpdateActivityInitialTime(time));
+      });
+
+      test('''Debe emitir los siguientes estados en el orden esperado
+      cuando el activity <no> está completo''', ()async{
+        when(activityCompletitionValidator.isCompleted(any))
+            .thenReturn(false);
+        final states = [
+          OnCreatingActivity(
+            today: currentDay,
+            activity: updatedActivity,
+            restantWork: tRestantWork,
+            canEnd: false
+          )
+        ];
+        expectLater(todayBloc.stream, emitsInOrder(states));
+        todayBloc.add(UpdateActivityInitialTime(time));
+      });
+    });
+    test('''Debe emitir los siguientes estados en el orden esperado
+      cuando el initialTime está dentro de uno de los rangos de duración de las demás activities''', ()async{
+        time = const TimeOfDay(
+          hour: 11,
+          minute: 05
+        );
+        formattedTime = const CustomTime(
+          hour: 11,
+          minute: 05
+        );
+        updatedActivity = HabitActivityCreation(
+          name: 'act_x',
+          initialTime: formattedTime,
+          minutesDuration: 10,
+          work: 1
+        );
+        currentDay = Day(
+          id: 100,
+          date: CustomDate.fromDateTime(
+            DateTime.now()
+          ),
+          activities: const [
+            HabitActivity(
+              id: 0,
+              name: 'ac_0',
+              minutesDuration: 50,
+              work: 10,
+              initialTime: CustomTime(
+                hour: 10,
+                minute: 15
+              )
+            ),
+            HabitActivity(
+              id: 1,
+              name: 'ac_1',
+              minutesDuration: 120,
+              work: 7,
+              initialTime: CustomTime(
+                hour: 15,
+                minute: 20
+              )
+            )
+          ],
+          work: 10
+        );
+        todayBloc.emit(OnCreatingActivity(
+          today: currentDay,
+          activity: initActivity,
+          restantWork: tRestantWork,
+          canEnd: false
+        ));
+        final states = [
+          OnCreatingActivityError(
+            today: currentDay,
+            activity: updatedActivity,
+            restantWork: tRestantWork,
+            canEnd: true,
+            message: TodayBloc.initialTimeIsOnAnotherActivityRangeMessage
+          )
+        ];
+        //expectLater(todayBloc.stream, emitsInOrder(states));
+        //todayBloc.add(UpdateActivityInitialTime(time));
+      });
+  });
+
+  test('''Debe emitir los siguientes estados en el orden esperado
+  cuando el time es null''', ()async{
     currentDay = Day(
       id: 100,
       date: CustomDate.fromDateTime(
@@ -124,80 +456,12 @@ void _testUpdateActivityInitialTime(){
       activities: [],
       work: 10
     );
-    initActivity = const HabitActivityCreation(
-      name: 'act_x',
-      initialTime: null,
-      minutesDuration: 10,
-      work: 1
-    );
-    tRestantWork = 10;
     todayBloc.emit(OnCreatingActivity(
       today: currentDay,
       activity: initActivity,
       restantWork: tRestantWork,
       canEnd: false
     ));
-    when(todayRepository.getDayByDate(any))
-        .thenAnswer((_) async => currentDay);
-  });
-
-  group('Cuando el date es != null', (){
-    late CustomTime formattedTime;
-    late HabitActivityCreation updatedActivity;
-    setUp((){
-      time = const TimeOfDay(hour: 10, minute: 20);
-      formattedTime = const CustomTime(hour: 10, minute: 20);
-      updatedActivity = HabitActivityCreation(
-        name: 'act_x',
-        initialTime: formattedTime,
-        minutesDuration: 10,
-        work: 1
-      );
-    });
-
-    test('Debe llamar los métodos esperados', ()async{
-      when(activityCompletitionValidator.isCompleted(any))
-          .thenReturn(true);
-      todayBloc.add(UpdateActivityInitialTime(time));
-      await untilCalled(activityCompletitionValidator.isCompleted(any));
-      verify(activityCompletitionValidator.isCompleted(updatedActivity));
-    });
-
-    test('''Debe emitir los siguientes estados en el orden esperado
-    cuando el activity <sí> está completo''', ()async{
-      when(activityCompletitionValidator.isCompleted(any))
-          .thenReturn(true);
-      final states = [
-        OnCreatingActivity(
-          today: currentDay,
-          activity: updatedActivity,
-          restantWork: tRestantWork,
-          canEnd: true
-        )
-      ];
-      expectLater(todayBloc.stream, emitsInOrder(states));
-      todayBloc.add(UpdateActivityInitialTime(time));
-    });
-
-    test('''Debe emitir los siguientes estados en el orden esperado
-    cuando el activity <no> está completo''', ()async{
-      when(activityCompletitionValidator.isCompleted(any))
-          .thenReturn(false);
-      final states = [
-        OnCreatingActivity(
-          today: currentDay,
-          activity: updatedActivity,
-          restantWork: tRestantWork,
-          canEnd: false
-        )
-      ];
-      expectLater(todayBloc.stream, emitsInOrder(states));
-      todayBloc.add(UpdateActivityInitialTime(time));
-    });
-  });
-
-  test('''Debe emitir los siguientes estados en el orden esperado
-  cuando el time es null''', ()async{
     time = null;
     expectLater(todayBloc.stream, emitsInOrder([]));
     todayBloc.add(UpdateActivityInitialTime(time));
