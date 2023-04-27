@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
@@ -52,13 +53,41 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   Future<void> _loadDayByCurrentDate(Emitter<TodayState> emit)async{
     emit(OnLoadingTodayDay());
     final currentDate = currentDateGetter.getCurrentDate();
-    final today = await repository.getDayByDate(currentDate);
+    var today = await repository.getDayByDate(currentDate);
+    final activities = _getSortedActivities(today.activities);
+    today = _createDayFromExistent(
+      today,
+      activities: activities
+    );
     final restantWork = _calculateRestantWork(today);
     emit(OnShowingTodayDay(
       today: today,
       restantWork: restantWork
     ));
   }
+
+  List<HabitActivity> _getSortedActivities(List<HabitActivity> activities) =>
+    activities.toList()
+      ..sort(
+        (act1, act2) => 
+          act1.initialTime.hour > act2.initialTime.hour?
+          1: act1.initialTime.hour < act2.initialTime.hour?
+            -1: act1.initialTime.minute > act2.initialTime.minute?
+              1: act1.initialTime.minute < act2.initialTime.minute?
+              -1: 0
+      );
+
+  Day _createDayFromExistent(
+    Day day,
+    {
+      List<HabitActivity>? activities
+    }
+  ) => Day(
+    id: day.id,
+    date: day.date,
+    activities: activities ?? day.activities,
+    work: day.work
+  );
 
   int _calculateRestantWork(Day day){
     final usedWork = day.activities.fold<int>(
@@ -198,9 +227,14 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       final activity = initialState.activity;
       if(activity.work <= initialState.restantWork){
         emit(OnLoadingTodayDay());
-        final updatedDay = await repository.setActivityToDay(
+        var updatedDay = await repository.setActivityToDay(
           activity,
           initialState.today
+        );
+        final activities = _getSortedActivities(updatedDay.activities);
+        updatedDay = _createDayFromExistent(
+          updatedDay,
+          activities: activities
         );
         final restantWork = _calculateRestantWork(updatedDay);
         emit(OnShowingTodayDay(

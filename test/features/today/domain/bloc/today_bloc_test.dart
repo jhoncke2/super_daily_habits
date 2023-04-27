@@ -61,9 +61,10 @@ void _testLoadDayByCurrentDate(){
   });
 
   group('Cuando todo sale bien', (){
-    late Day currentDay;
+    late Day initDay;
+    late Day sortedDay;
     setUp((){
-      currentDay = Day(
+      initDay = Day(
         id: 100,
         date: currentDate,
         activities: const [
@@ -73,7 +74,7 @@ void _testLoadDayByCurrentDate(){
             minutesDuration: 10, 
             work: 2, 
             initialTime: CustomTime(
-              hour: 10,
+              hour: 19,
               minute: 20
             )
           ),
@@ -83,15 +84,62 @@ void _testLoadDayByCurrentDate(){
             minutesDuration: 20, 
             work: 3, 
             initialTime: CustomTime(
+              hour: 20,
+              minute: 30
+            )
+          ),
+          HabitActivity(
+            id: 2,
+            name: 'ac_2', 
+            minutesDuration: 50, 
+            work: 3, 
+            initialTime: CustomTime(
               hour: 10,
+              minute: 10
+            )
+          )
+        ],
+        work: 10
+      );
+      sortedDay = Day(
+        id: 100,
+        date: currentDate,
+        activities: const [
+          HabitActivity(
+            id: 2,
+            name: 'ac_2', 
+            minutesDuration: 50, 
+            work: 3, 
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 10
+            )
+          ),
+          HabitActivity(
+            id: 0,
+            name: 'ac_0', 
+            minutesDuration: 10, 
+            work: 2, 
+            initialTime: CustomTime(
+              hour: 19,
               minute: 20
+            )
+          ),
+          HabitActivity(
+            id: 1,
+            name: 'ac_1', 
+            minutesDuration: 20, 
+            work: 3, 
+            initialTime: CustomTime(
+              hour: 20,
+              minute: 30
             )
           )
         ],
         work: 10
       );
       when(todayRepository.getDayByDate(any))
-          .thenAnswer((_) async => currentDay);
+          .thenAnswer((_) async => initDay);
     });
     
     test('Debe llamar los métodos esperados', ()async{
@@ -102,12 +150,12 @@ void _testLoadDayByCurrentDate(){
       verify(todayRepository.getDayByDate(currentDate));
     });
     test('''Debe emitir los siguientes estados en el orden esperado
-    con un restantWork de 5''', ()async{
+    con un restantWork de 5 y los activities ordenados''', ()async{
       final states = [
         OnLoadingTodayDay(),
         OnShowingTodayDay(
-          today: currentDay,
-          restantWork: 5
+          today: sortedDay,
+          restantWork: 2
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -457,6 +505,7 @@ void _testCreateActivity(){
 
   group('Cuando todo sale bien', (){
     late Day updatedDay;
+    late Day tSortedUpdatedDay;
     setUp((){
       initRestantWork = 11;
       todayBloc.emit(OnCreatingActivity(
@@ -475,7 +524,7 @@ void _testCreateActivity(){
             minutesDuration: 10, 
             work: 8, 
             initialTime: CustomTime(
-              hour: 10,
+              hour: 11,
               minute: 20
             )
           ),
@@ -486,6 +535,33 @@ void _testCreateActivity(){
             work: 3, 
             initialTime: CustomTime(
               hour: 10,
+              minute: 20
+            )
+          )
+        ],
+        work: 20
+      );
+      tSortedUpdatedDay = Day(
+        id: 0,
+        date: dayDate,
+        activities: const [
+          HabitActivity(
+            id: 1,
+            name: 'ac_1', 
+            minutesDuration: 20, 
+            work: 3, 
+            initialTime: CustomTime(
+              hour: 10,
+              minute: 20
+            )
+          ),
+          HabitActivity(
+            id: 0,
+            name: 'ac_0', 
+            minutesDuration: 10, 
+            work: 8, 
+            initialTime: CustomTime(
+              hour: 11,
               minute: 20
             )
           )
@@ -507,7 +583,7 @@ void _testCreateActivity(){
       final states = [
         OnLoadingTodayDay(),
         OnShowingTodayDay(
-          today: updatedDay,
+          today: tSortedUpdatedDay,
           restantWork: 9
         )
       ];
