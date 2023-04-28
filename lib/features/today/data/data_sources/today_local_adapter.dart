@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/common/data/database.dart' as database;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 
 abstract class TodayLocalAdapter{
-  Map<String, dynamic> getMapFromDay(DayCreation day);
+  Map<String, dynamic> getMapFromDay(DayBase day);
   Day getEmptyDayFromMap(Map<String, dynamic> map);
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities);
   String getStringMapFromDate(CustomDate date);
@@ -46,7 +46,7 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
   );
 
   @override
-  Map<String, dynamic> getMapFromDay(DayCreation day) => {
+  Map<String, dynamic> getMapFromDay(DayBase day) => {
     database.daysDateKey: getStringMapFromDate(day.date),
     database.daysWorkKey: day.work
   };

@@ -7,7 +7,7 @@ import 'package:super_daily_habits/features/today/data/data_sources/today_local_
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source_impl.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'today_local_data_source_impl_test.mocks.dart';

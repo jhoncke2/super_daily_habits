@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/common/presentation/widgets/error_panel.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/today_view.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/work_bar.dart';

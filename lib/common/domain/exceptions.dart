@@ -25,3 +25,20 @@ class DBException extends AppException{
     type
   ];
 }
+
+enum StorageExceptionType{
+  empty,
+  normal
+}
+
+class StorageException extends AppException{
+  final StorageExceptionType type;
+  const StorageException({
+    required String message, 
+    required this.type
+  }): super(
+    message
+  );
+  @override
+  List<Object?> get props => [message, type];
+}

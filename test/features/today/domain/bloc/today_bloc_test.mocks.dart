@@ -6,20 +6,23 @@
 import 'dart:async' as _i5;
 
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:super_daily_habits/common/domain/common_repository.dart' as _i8;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart'
     as _i6;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
     as _i3;
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart'
-    as _i10;
-import 'package:super_daily_habits/features/today/domain/entities/day.dart'
+    as _i12;
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart'
     as _i2;
-import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart'
-    as _i8;
-import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart'
     as _i7;
-import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
+import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart'
+    as _i10;
+import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
     as _i9;
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
+    as _i11;
 import 'package:super_daily_habits/features/today/domain/today_repository.dart'
     as _i4;
 
@@ -100,12 +103,53 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
           ),
         )),
       ) as _i5.Future<_i2.Day>);
+  @override
+  _i5.Future<_i2.Day> createDay(_i7.DayBase? day) => (super.noSuchMethod(
+        Invocation.method(
+          #createDay,
+          [day],
+        ),
+        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+          this,
+          Invocation.method(
+            #createDay,
+            [day],
+          ),
+        )),
+      ) as _i5.Future<_i2.Day>);
+}
+
+/// A class which mocks [CommonRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockCommonRepository extends _i1.Mock implements _i8.CommonRepository {
+  MockCommonRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<void> setCommonWork(int? work) => (super.noSuchMethod(
+        Invocation.method(
+          #setCommonWork,
+          [work],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+  @override
+  _i5.Future<int> getCommonWork() => (super.noSuchMethod(
+        Invocation.method(
+          #getCommonWork,
+          [],
+        ),
+        returnValue: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 }
 
 /// A class which mocks [CurrentDateGetter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCurrentDateGetter extends _i1.Mock implements _i7.CurrentDateGetter {
+class MockCurrentDateGetter extends _i1.Mock implements _i9.CurrentDateGetter {
   MockCurrentDateGetter() {
     _i1.throwOnMissingStub(this);
   }
@@ -130,7 +174,7 @@ class MockCurrentDateGetter extends _i1.Mock implements _i7.CurrentDateGetter {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockActivityCompletitionValidator extends _i1.Mock
-    implements _i8.ActivityCompletitionValidator {
+    implements _i10.ActivityCompletitionValidator {
   MockActivityCompletitionValidator() {
     _i1.throwOnMissingStub(this);
   }
@@ -149,15 +193,15 @@ class MockActivityCompletitionValidator extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTimeRangeCalificator extends _i1.Mock
-    implements _i9.TimeRangeCalificator {
+    implements _i11.TimeRangeCalificator {
   MockTimeRangeCalificator() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
   bool timeIsBetweenTimeRange(
-    _i10.CustomTime? time,
-    _i10.CustomTime? rangeInit,
+    _i12.CustomTime? time,
+    _i12.CustomTime? rangeInit,
     int? minutesDuration,
   ) =>
       (super.noSuchMethod(
@@ -167,6 +211,25 @@ class MockTimeRangeCalificator extends _i1.Mock
             time,
             rangeInit,
             minutesDuration,
+          ],
+        ),
+        returnValue: false,
+      ) as bool);
+  @override
+  bool timeRangesCollide(
+    _i12.CustomTime? initialTime1,
+    int? duration1,
+    _i12.CustomTime? initialTime2,
+    int? duration2,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #timeRangesCollide,
+          [
+            initialTime1,
+            duration1,
+            initialTime2,
+            duration2,
           ],
         ),
         returnValue: false,

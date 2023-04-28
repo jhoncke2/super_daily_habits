@@ -1,11 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -20,11 +22,13 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   static const initialTimeIsOnAnotherActivityRangeMessage = 'El tiempo elegido colisiona con el rango de tiempo de otra actividad';
   static const maxDayMinutes = 1440;
   final TodayRepository repository;
+  final CommonRepository commonRepository;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
   final TimeRangeCalificator timeRangeCalificator;
   TodayBloc({
     required this.repository,
+    required this.commonRepository,
     required this.currentDateGetter,
     required this.activityCompletitionValidator,
     required this.timeRangeCalificator
@@ -52,18 +56,32 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
 
   Future<void> _loadDayByCurrentDate(Emitter<TodayState> emit)async{
     emit(OnLoadingTodayDay());
-    final currentDate = currentDateGetter.getCurrentDate();
-    var today = await repository.getDayByDate(currentDate);
-    final activities = _getSortedActivities(today.activities);
-    today = _createDayFromExistent(
-      today,
-      activities: activities
-    );
-    final restantWork = _calculateRestantWork(today);
-    emit(OnShowingTodayDay(
-      today: today,
-      restantWork: restantWork
-    ));
+      final currentDate = currentDateGetter.getCurrentDate();
+    try{
+      var today = await repository.getDayByDate(currentDate);
+      final activities = _getSortedActivities(today.activities);
+      today = _createDayFromExistent(
+        today,
+        activities: activities
+      );
+      final restantWork = _calculateRestantWork(today);
+      emit(OnShowingTodayDay(
+        today: today,
+        restantWork: restantWork
+      ));
+    }on DBException catch(exception){
+      if(exception.type == DBExceptionType.empty){
+        final commonWork = await commonRepository.getCommonWork();
+        final newDay = await repository.createDay(DayBase(
+          work: commonWork,
+          date: currentDate
+        ));
+        emit(OnShowingTodayDay(
+          today: newDay,
+          restantWork: commonWork
+        ));
+      }
+    }
   }
 
   List<HabitActivity> _getSortedActivities(List<HabitActivity> activities) =>

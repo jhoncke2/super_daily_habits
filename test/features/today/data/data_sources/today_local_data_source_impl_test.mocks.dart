@@ -15,9 +15,9 @@ import 'package:super_daily_habits/features/today/domain/entities/activity/habit
     as _i8;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
     as _i7;
-import 'package:super_daily_habits/features/today/domain/entities/day.dart'
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart'
     as _i2;
-import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart'
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart'
     as _i6;
 
 // ignore_for_file: type=lint
@@ -186,8 +186,7 @@ class MockTodayLocalAdapter extends _i1.Mock implements _i5.TodayLocalAdapter {
   }
 
   @override
-  Map<String, dynamic> getMapFromDay(_i6.DayCreation? day) =>
-      (super.noSuchMethod(
+  Map<String, dynamic> getMapFromDay(_i6.DayBase? day) => (super.noSuchMethod(
         Invocation.method(
           #getMapFromDay,
           [day],

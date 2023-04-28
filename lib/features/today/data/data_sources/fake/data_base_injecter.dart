@@ -1,7 +1,7 @@
 import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 
 class DataBaseInjecter{
   final DatabaseManager databaseManager;
@@ -12,9 +12,8 @@ class DataBaseInjecter{
   });
   Future<void> injectFakeData()async{
     final date = DateTime.now();
-    final day = DayCreation(
+    final day = DayBase(
       date: CustomDate.fromDateTime(date),
-      activities: [],
       work: 100
     );
     final jsonDay = adapter.getMapFromDay(day);

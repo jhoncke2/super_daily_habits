@@ -2,9 +2,10 @@ import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 
 class TodayLocalDataSourceImpl implements TodayLocalDataSource{
   static const dayByDateQuery = '$daysDateKey = ?';
@@ -62,5 +63,14 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
       [id]
     );
     return adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities);
+  }
+
+  @override
+  Future<void> setDay(DayBase day)async{
+    final jsonDay = adapter.getMapFromDay(day);
+    await dbManager.insert(
+      daysTableName,
+      jsonDay
+    );
   }
 }

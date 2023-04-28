@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_daily_habits/app_theme.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_tile.dart';
 class TodayView extends StatelessWidget {
   late ScrollController activitiesController;

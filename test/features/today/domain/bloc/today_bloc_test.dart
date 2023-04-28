@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
-import 'package:super_daily_habits/features/today/domain/entities/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
+import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -17,12 +19,14 @@ import 'today_bloc_test.mocks.dart';
 
 late TodayBloc todayBloc;
 late MockTodayRepository todayRepository;
+late MockCommonRepository commonRepository;
 late MockCurrentDateGetter currentDateGetter;
 late MockActivityCompletitionValidator activityCompletitionValidator;
 late MockTimeRangeCalificator timeRangeCalificator;
 
 @GenerateMocks([
   TodayRepository,
+  CommonRepository,
   CurrentDateGetter,
   ActivityCompletitionValidator,
   TimeRangeCalificator
@@ -32,18 +36,21 @@ void main(){
     timeRangeCalificator = MockTimeRangeCalificator();
     activityCompletitionValidator = MockActivityCompletitionValidator();
     currentDateGetter = MockCurrentDateGetter();
+    commonRepository = MockCommonRepository();
     todayRepository = MockTodayRepository();
     todayBloc = TodayBloc(
       repository: todayRepository,
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
-      timeRangeCalificator: timeRangeCalificator
+      timeRangeCalificator: timeRangeCalificator,
+      commonRepository: commonRepository
     );
   });
 
   group('load day by current date', _testLoadDayByCurrentDate);
   group('init activity creation', _testInitActivityCreation);
   group('update activity initial time', _testUpdateActivityInitialTime);
+  group('update activity duration', _testUpdateActivityDuration);
   group('create activity', _testCreateActivity);
 }
 
@@ -148,6 +155,8 @@ void _testLoadDayByCurrentDate(){
       verify(currentDateGetter.getCurrentDate());
       await untilCalled(todayRepository.getDayByDate(any));
       verify(todayRepository.getDayByDate(currentDate));
+      verifyNever(commonRepository.getCommonWork());
+      verifyNever(todayRepository.createDay(any));
     });
     test('''Debe emitir los siguientes estados en el orden esperado
     con un restantWork de 5 y los activities ordenados''', ()async{
@@ -156,6 +165,57 @@ void _testLoadDayByCurrentDate(){
         OnShowingTodayDay(
           today: sortedDay,
           restantWork: 2
+        )
+      ];
+      expectLater(todayBloc.stream, emitsInOrder(states));
+      todayBloc.add(LoadDayByCurrentDate());
+    });
+  });
+
+  group('Cuando el repository retorna DBException.empty', (){
+    late DayBase newDay;
+    late int commonWork;
+    late Day createdDay;
+    setUp((){
+      commonWork = 100;
+      when(commonRepository.getCommonWork())
+          .thenAnswer((_) async => commonWork);
+      newDay = DayBase(
+        date: currentDate,
+        work: commonWork
+      );
+      when(todayRepository.getDayByDate(any))
+          .thenThrow(const DBException(
+            type: DBExceptionType.empty
+          ));
+      createdDay = Day(
+        id: 1000,
+        activities: const [],
+        date: currentDate,
+        work: commonWork
+      );
+      when(todayRepository.createDay(any))
+          .thenAnswer((_) async => createdDay);
+    });
+
+    test('Debe lanzar los siguientes métodos', ()async{
+      todayBloc.add(LoadDayByCurrentDate());
+      await untilCalled(currentDateGetter.getCurrentDate());
+      verify(currentDateGetter.getCurrentDate());
+      await untilCalled(todayRepository.getDayByDate(any));
+      verify(todayRepository.getDayByDate(currentDate));
+      await(commonRepository.getCommonWork());
+      verify(commonRepository.getCommonWork());
+      await untilCalled(todayRepository.createDay(any));
+      verify(todayRepository.createDay(newDay));
+    });
+
+    test('Debe emitir los siguientes estados en el orden esperado', ()async{
+      final states = [
+        OnLoadingTodayDay(),
+        OnShowingTodayDay(
+          today: createdDay,
+          restantWork: commonWork
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -474,6 +534,26 @@ void _testUpdateActivityInitialTime(){
     expectLater(todayBloc.stream, emitsInOrder([]));
     todayBloc.add(UpdateActivityInitialTime(time));
   });
+}
+
+void _testUpdateActivityDuration(){
+  /*
+  late Day today;
+  setUp((){
+    Day(
+      id: 0,
+      date: dayDate,
+      activities: [],
+      work: 10
+    );
+    todayBloc.emit(OnCreatingActivity(
+      today: initDay,
+      activity: activity,
+      restantWork: initRestantWork,
+      canEnd: true
+    ));
+  });
+  */
 }
 
 void _testCreateActivity(){

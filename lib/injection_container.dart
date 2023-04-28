@@ -1,6 +1,11 @@
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:super_daily_habits/common/data/common_repository_impl.dart';
 import 'package:super_daily_habits/common/data/database.dart';
+import 'package:super_daily_habits/common/data/shared_preferences_manager.dart';
+import 'package:super_daily_habits/common/domain/common_repository.dart';
+import 'package:super_daily_habits/common/domain/custom_time_manager.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/fake/data_base_injecter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
@@ -13,15 +18,31 @@ import 'package:super_daily_habits/features/today/domain/helpers/time_range_cali
 import 'package:super_daily_habits/features/today/domain/today_repository.dart';
 
 final sl = GetIt.instance;
-bool useRealData = false;
+bool useRealData = true;
 
 Future<void> init() async {
+   /**********************************************
+   *             Common
+   ********************************************** */
   final db = await CustomDataBaseFactory.dataBase;
   sl.registerLazySingleton<DatabaseManager>(
     () => DataBaseManagerImpl(
       db: db
     )
   );
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferencesManager>(
+    () => SharedPreferencesManagerImpl(preferences: sharedPreferences)
+  );
+  sl.registerLazySingleton<CommonRepository>(
+    () => CommonRepositoryImpl(
+      sharedPreferences: sl<SharedPreferencesManager>()
+    )
+  );
+
+  /**********************************************
+   *             Today
+   ********************************************** */
   //await _clearDataBase(db);
   sl.registerLazySingleton<TodayLocalAdapter>(
     () => TodayLocalAdapterImpl()
@@ -46,10 +67,13 @@ Future<void> init() async {
   );
   final currentDateGetter = CurrentDateGetterImpl();
   final activityCompletitionValidator = ActivityCompletitionValidatorImpl();
-  final timeRangeCalificator = TimeRangeCalificatorImpl();
+  final timeRangeCalificator = TimeRangeCalificatorImpl(
+    customTimeManager: CustomTimeManagerImpl()
+  );
   sl.registerFactory<TodayBloc>(
     () => TodayBloc(
       repository: sl<TodayRepository>(),
+      commonRepository: sl<CommonRepository>(),
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
       timeRangeCalificator: timeRangeCalificator
