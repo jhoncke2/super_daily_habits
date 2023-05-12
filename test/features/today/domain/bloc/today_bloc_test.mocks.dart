@@ -83,6 +83,7 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
   _i5.Future<_i2.Day> setActivityToDay(
     _i6.HabitActivityCreation? activity,
     _i2.Day? day,
+    int? newRestantWork,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -90,6 +91,7 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
           [
             activity,
             day,
+            newRestantWork,
           ],
         ),
         returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
@@ -99,6 +101,7 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
             [
               activity,
               day,
+              newRestantWork,
             ],
           ),
         )),
@@ -114,6 +117,30 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
           Invocation.method(
             #createDay,
             [day],
+          ),
+        )),
+      ) as _i5.Future<_i2.Day>);
+  @override
+  _i5.Future<_i2.Day> updateActivityRestantWork(
+    int? restantWork,
+    _i2.Day? day,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateActivityRestantWork,
+          [
+            restantWork,
+            day,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+          this,
+          Invocation.method(
+            #updateActivityRestantWork,
+            [
+              restantWork,
+              day,
+            ],
           ),
         )),
       ) as _i5.Future<_i2.Day>);

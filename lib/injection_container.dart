@@ -6,6 +6,7 @@ import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/common/data/shared_preferences_manager.dart';
 import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/custom_time_manager.dart';
+import 'package:super_daily_habits/common/presentation/providers/nav_provider.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/fake/data_base_injecter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
@@ -38,6 +39,9 @@ Future<void> init() async {
     () => CommonRepositoryImpl(
       sharedPreferences: sl<SharedPreferencesManager>()
     )
+  );
+  sl.registerLazySingleton<NavProvider>(
+    () => NavProviderImpl()
   );
 
   /**********************************************

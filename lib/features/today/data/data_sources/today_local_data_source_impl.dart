@@ -73,4 +73,19 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
       jsonDay
     );
   }
+  
+  @override
+  Future<void> updateRestantWork(int restantWork, Day day)async{
+    final updatedDay = DayBase(
+      date: day.date,
+      totalWork: day.totalWork,
+      restantWork: restantWork
+    );
+    final jsonDay = adapter.getMapFromDay(updatedDay);
+    await dbManager.update(
+      daysTableName,
+      jsonDay,
+      day.id
+    );
+  }
 }

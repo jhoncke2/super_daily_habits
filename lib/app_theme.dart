@@ -32,6 +32,7 @@ class AppColors{
   static const backgroundSecondary = Color.fromRGBO(240, 240, 240, 1);
   static const iconPrimary = Color.fromRGBO(143, 171, 221, 1);
   static const error = Colors.redAccent;
+  static const errorText = Color.fromARGB(255, 208, 23, 23);
 }
 
 class AppDimens{

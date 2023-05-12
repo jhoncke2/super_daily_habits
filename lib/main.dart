@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:super_daily_habits/app_theme.dart';
-import 'package:super_daily_habits/features/today/presentation/today_page.dart';
+import 'package:super_daily_habits/features/today/presentation/day_page.dart';
 import './injection_container.dart' as ic;
+import './routes.dart' as routes;
 
 Future<void> main()async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,8 @@ class MyApp extends StatelessWidget {
         //primarySwatch: AppColors.primary,
         primaryColor: AppColors.primary
       ),
-      home: const TodayPage(),
+      routes: routes.routes,
+      home: const DayPage()
     );
   }
 }

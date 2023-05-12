@@ -7,8 +7,11 @@ abstract class TodayEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadDayByCurrentDate extends TodayEvent{
-
+class LoadDay extends TodayEvent{
+  final DateTime? date;
+  const LoadDay({
+    this.date
+  });
 }
 
 class InitActivityCreation extends TodayEvent{

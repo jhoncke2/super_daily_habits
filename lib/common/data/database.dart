@@ -23,6 +23,7 @@ const weekDaysHollyDayValue = 'hollyday';
 const daysTableName = 'days';
 const daysDateKey = 'date';
 const daysWorkKey = 'work';
+const daysRestantWorkKey = 'restant_work';
 // ************ activities relation
 const activitiesTableName = 'activities';
 const activitiesNameKey = 'name';
@@ -141,7 +142,7 @@ class DataBaseManagerImpl implements DatabaseManager{
 
 class CustomDataBaseFactory{
   static const String DB_NAME = 'super_daily_habits.db';
-  static const int DB_VERSION = 1;
+  static const int DB_VERSION = 2;
 
   static Future<Database> get dataBase async => await initDataBase();
 
@@ -165,7 +166,8 @@ class CustomDataBaseFactory{
       CREATE TABLE $daysTableName (
         $idKey INTEGER PRIMARY KEY,
         $daysDateKey TEXT NOT NULL,
-        $daysWorkKey INTEGER
+        $daysWorkKey INTEGER NOT NULL,
+        $daysRestantWorkKey INTEGER NOT NULL
       )
     '''
     );

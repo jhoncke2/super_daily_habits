@@ -8,4 +8,5 @@ abstract class TodayLocalDataSource{
   Future<Day> getDayFromDate(CustomDate date);
   Future<Day> getDayById(int id);
   Future<void> setActivityToDay(HabitActivityCreation activity, Day day);
+  Future<void> updateRestantWork(int restantWork, Day day);
 }

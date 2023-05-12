@@ -5,6 +5,7 @@ import 'package:super_daily_habits/features/today/domain/entities/day/day_base.d
 
 abstract class TodayRepository{
   Future<Day> getDayByDate(CustomDate date);
-  Future<Day> setActivityToDay(HabitActivityCreation activity, Day day);
+  Future<Day> setActivityToDay(HabitActivityCreation activity, Day day, int newRestantWork);
   Future<Day> createDay(DayBase day);
+  Future<Day> updateActivityRestantWork(int restantWork, Day day);
 }

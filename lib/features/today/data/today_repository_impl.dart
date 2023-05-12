@@ -16,8 +16,9 @@ class TodayRepositoryImpl implements TodayRepository{
     await localDataSource.getDayFromDate(date);
 
   @override
-  Future<Day> setActivityToDay(HabitActivityCreation activity, Day day)async{
+  Future<Day> setActivityToDay(HabitActivityCreation activity, Day day, int newRestantWork)async{
     await localDataSource.setActivityToDay(activity, day);
+    await localDataSource.updateRestantWork(newRestantWork, day);
     return await localDataSource.getDayById(day.id);
   }
 
@@ -25,5 +26,11 @@ class TodayRepositoryImpl implements TodayRepository{
   Future<Day> createDay(DayBase day)async{
     await localDataSource.setDay(day);
     return await localDataSource.getDayFromDate(day.date);
+  }
+  
+  @override
+  Future<Day> updateActivityRestantWork(int restantWork, Day day)async{
+    await localDataSource.updateRestantWork(restantWork, day);
+    return await localDataSource.getDayById(day.id);
   }
 }

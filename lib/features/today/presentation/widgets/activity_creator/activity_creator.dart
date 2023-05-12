@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
-import '../utils.dart' as utils;
+import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator/activity_input.dart';
+import '../../utils.dart' as utils;
+
+const durationCollidesMessage = 'Elige una duración que se ajuste';
+const notEnoughWorkMessage = 'Elige una cantidad de trabajo que se ajuste';
 
 class ActivityCreator extends StatelessWidget {
   const ActivityCreator({Key? key}) : super(key: key);
@@ -73,26 +77,28 @@ class ActivityCreator extends StatelessWidget {
             SizedBox(
               height: dimens.getHeightPercentage(0.02)
             ),
-            TextField(
+            ActivityInput(
+              hintText: 'Duración',
               onChanged: (newValue){
                 BlocProvider.of<TodayBloc>(context).add(UpdateActivityMinutesDuration(newValue));
               },
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Duración',
-              )
+              isOnError: (
+                blocState is OnError && (blocState as OnError).type == ErrorType.durationCollides
+              ),
+              errorMessage: durationCollidesMessage,
             ),
             SizedBox(
               height: dimens.getHeightPercentage(0.02)
             ),
-            TextField(
+            ActivityInput(
+              hintText: 'Trabajo',
               onChanged: (newValue){
                 BlocProvider.of<TodayBloc>(context).add(UpdateActivityWork(newValue));
               },
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Trabajo',
-              )
+              isOnError: (
+                blocState is OnError && (blocState as OnError).type == ErrorType.notEnoughWork
+              ),
+              errorMessage: notEnoughWorkMessage,
             ),
             SizedBox(
               height: dimens.getHeightPercentage(0.03)

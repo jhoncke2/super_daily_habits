@@ -33,7 +33,7 @@ class WorkBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            '${blocState.restantWork}/${blocState.today.work}'
+            '${blocState.restantWork}/${blocState.day.totalWork}'
           ),
           SizedBox(
             width: dimens.getWidthPercentage(0.05),
@@ -53,10 +53,10 @@ class WorkBar extends StatelessWidget {
                   )
                 ),
                 Container(
-                  width: dimens.getWidthPercentage(( 1 - (blocState.restantWork / blocState.today.work)) * 0.25),
+                  width: dimens.getWidthPercentage(( 1 - (blocState.restantWork / blocState.day.totalWork)) * 0.25),
                   height: dimens.getHeightPercentage(0.025),
                   margin: EdgeInsets.only(
-                    left: dimens.getWidthPercentage(0.25 - ( 1 - (blocState.restantWork / blocState.today.work)) * 0.25)
+                    left: dimens.getWidthPercentage(0.25 - ( 1 - (blocState.restantWork / blocState.day.totalWork)) * 0.25)
                   ),
                   decoration: const BoxDecoration(
                     color: Colors.white

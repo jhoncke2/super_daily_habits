@@ -8,7 +8,8 @@ class Day extends DayBase{
     required this.id,
     required this.activities,
     required super.date,
-    required super.work
+    required super.totalWork,
+    required super.restantWork
   });
   @override
   List<Object?> get props => [

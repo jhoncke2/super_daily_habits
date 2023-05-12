@@ -35,7 +35,8 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
       ])
     ),
     activities: [],
-    work: map[database.daysWorkKey]
+    totalWork: map[database.daysWorkKey],
+    restantWork: map[database.daysRestantWorkKey]
   );
 
   CustomDate _getDateFromMap(Map<String, dynamic> jsonDate) => CustomDate(
@@ -48,7 +49,7 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
   @override
   Map<String, dynamic> getMapFromDay(DayBase day) => {
     database.daysDateKey: getStringMapFromDate(day.date),
-    database.daysWorkKey: day.work
+    database.daysWorkKey: day.totalWork
   };
 
   @override
@@ -119,6 +120,7 @@ class TodayLocalAdapterImpl extends TodayLocalAdapter{
         work: item[database.activitiesWorkKey]
       )
     ).toList(),
-    work: jsonDay[database.daysWorkKey]
+    totalWork: jsonDay[database.daysWorkKey],
+    restantWork: jsonDay[database.daysRestantWorkKey]
   );
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
+import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
@@ -20,6 +21,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   static const insufficientRestantWorkMessage = 'No hay suficiente trabajo disponible';
   static const dayTimeFilledMessage = 'El tiempo del día está completamente lleno';
   static const initialTimeIsOnAnotherActivityRangeMessage = 'El tiempo elegido colisiona con el rango de tiempo de otra actividad';
+  static const currentRangeCollidesWithOtherMessage = 'El rango de tiempo de esta actividad colisiona con el de otra';
   static const maxDayMinutes = 1440;
   final TodayRepository repository;
   final CommonRepository commonRepository;
@@ -34,8 +36,8 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     required this.timeRangeCalificator
   }) : super(TodayInitial()) {
     on<TodayEvent>((event, emit)async{
-      if(event is LoadDayByCurrentDate){
-        await _loadDayByCurrentDate(emit);
+      if(event is LoadDay){
+        await _loadDay(emit, event);
       }else if(event is InitActivityCreation){
         _initActivityCreation(emit);
       }else if(event is UpdateActivityName){
@@ -54,30 +56,39 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     });
   }
 
-  Future<void> _loadDayByCurrentDate(Emitter<TodayState> emit)async{
+  Future<void> _loadDay(Emitter<TodayState> emit, LoadDay event)async{
     emit(OnLoadingTodayDay());
-      final currentDate = currentDateGetter.getCurrentDate();
+    late CustomDate date;
+    if(event.date == null){
+      date = currentDateGetter.getCurrentDate();
+    }else{
+      date = CustomDate.fromDateTime(event.date!);
+    }
     try{
-      var today = await repository.getDayByDate(currentDate);
+      var today = await repository.getDayByDate(date);
       final activities = _getSortedActivities(today.activities);
       today = _createDayFromExistent(
         today,
         activities: activities
       );
-      final restantWork = _calculateRestantWork(today);
+      final restantWork = _calculateRestantWork(
+        today.totalWork,
+        today.activities
+      );
       emit(OnShowingTodayDay(
-        today: today,
+        day: today,
         restantWork: restantWork
       ));
     }on DBException catch(exception){
       if(exception.type == DBExceptionType.empty){
         final commonWork = await commonRepository.getCommonWork();
         final newDay = await repository.createDay(DayBase(
-          work: commonWork,
-          date: currentDate
+          totalWork: commonWork,
+          restantWork: commonWork,
+          date: date
         ));
         emit(OnShowingTodayDay(
-          today: newDay,
+          day: newDay,
           restantWork: commonWork
         ));
       }
@@ -104,45 +115,51 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     id: day.id,
     date: day.date,
     activities: activities ?? day.activities,
-    work: day.work
+    totalWork: day.totalWork,
+    restantWork: day.restantWork
   );
 
-  int _calculateRestantWork(Day day){
-    final usedWork = day.activities.fold<int>(
+  int _calculateRestantWork(int totalWork, List<HabitActivity> activities){
+    final usedWork = activities.fold<int>(
       0,
       (previousValue, activity) => previousValue + activity.work
     );
-    return day.work - usedWork;
+    return totalWork - usedWork;
   }
 
   void _initActivityCreation(Emitter<TodayState> emit){
     final initialState = state as OnTodayDay;
-    final totalDuration = initialState.today.activities.fold<int>(
+    final totalDuration = initialState.day.activities.fold<int>(
       0,
       (previousValue, activity) => previousValue + activity.minutesDuration
     );
     if(totalDuration < maxDayMinutes){
-      final today = initialState.today;
-      const activity = HabitActivityCreation(
-        name: '',
-        initialTime: null,
-        minutesDuration: 0,
-        work: 0
-      );
-      final canEnd = activityCompletitionValidator.isCompleted(activity);
-      emit(OnCreatingActivity(
-        today: today,
-        activity: activity,
-        restantWork: initialState.restantWork,
-        canEnd: canEnd
-      ));
+      _continueActivityCreationWithEnoughDayMinutes(emit, initialState);
     }else{
       emit(OnShowingTodayDayError(
-        today: initialState.today,
+        day: initialState.day,
         restantWork: initialState.restantWork,
-        message: dayTimeFilledMessage
+        message: dayTimeFilledMessage,
+        type: ErrorType.general
       ));
     }
+  }
+
+  void _continueActivityCreationWithEnoughDayMinutes(Emitter<TodayState> emit, OnTodayDay initialState){
+    final today = initialState.day;
+    const activity = HabitActivityCreation(
+      name: '',
+      initialTime: null,
+      minutesDuration: 0,
+      work: 0
+    );
+    final canEnd = activityCompletitionValidator.isCompleted(activity);
+    emit(OnCreatingActivity(
+      day: today,
+      activity: activity,
+      restantWork: initialState.restantWork,
+      canEnd: canEnd
+    ));
   }
 
   void _updateActivityName(Emitter<TodayState> emit, UpdateActivityName event){
@@ -153,12 +170,27 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     );
     final canEnd = activityCompletitionValidator.isCompleted(activity);
     emit(OnCreatingActivity(
-      today: initialState.today,
+      day: initialState.day,
       activity: activity,
       restantWork: initialState.restantWork,
       canEnd: canEnd
     ));
   }
+
+  HabitActivityCreation _getActivityCreationFromExistent(
+    HabitActivityCreation activity,
+    {
+      String? name,
+      CustomTime? initialTime,
+      int? minutesDuration,
+      int? work
+    }
+  ) => HabitActivityCreation(
+    name: name ?? activity.name,
+    initialTime: initialTime ?? activity.initialTime,
+    minutesDuration: minutesDuration ?? activity.minutesDuration,
+    work: work ?? activity.work
+  );
 
   void _updateActivityInitialTime(Emitter<TodayState> emit, UpdateActivityInitialTime event){
     if(event.initialTime != null){
@@ -167,8 +199,9 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         hour: event.initialTime!.hour,
         minute: event.initialTime!.minute
       );
-      final activities = initialState.today.activities;
+      final activities = initialState.day.activities;
       bool timeIsBetweenAnyActivityRange = false;
+      bool newRangeCollides = false;
       for(int i = 0; i < activities.length && !timeIsBetweenAnyActivityRange; i++){
         final currentActivity = activities[i];
         timeIsBetweenAnyActivityRange |= timeRangeCalificator.timeIsBetweenTimeRange(
@@ -176,14 +209,23 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
           currentActivity.initialTime,
           currentActivity.minutesDuration
         );
+        newRangeCollides |= timeRangeCalificator.timeRangesCollide(
+          formattedInitialTime,
+          initialState.activity.minutesDuration,
+          currentActivity.initialTime,
+          currentActivity.minutesDuration
+        );
       }
-      if(timeIsBetweenAnyActivityRange){
+      if(timeIsBetweenAnyActivityRange || newRangeCollides){
         emit(OnCreatingActivityError(
-          today: initialState.today,
+          day: initialState.day,
           activity: initialState.activity,
           restantWork: initialState.restantWork,
           canEnd: initialState.canEnd,
-          message: initialTimeIsOnAnotherActivityRangeMessage
+          message: timeIsBetweenAnyActivityRange? 
+            initialTimeIsOnAnotherActivityRangeMessage :
+            currentRangeCollidesWithOtherMessage,
+          type: ErrorType.initTimeCollides
         ));
       }else{
         final activity = _getActivityCreationFromExistent(
@@ -192,7 +234,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         );
         final canEnd = activityCompletitionValidator.isCompleted(activity);
         emit(OnCreatingActivity(
-          today: initialState.today,
+          day: initialState.day,
           activity: activity,
           restantWork: initialState.restantWork,
           canEnd: canEnd
@@ -204,13 +246,14 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   void _updateActivityMinutesDuration(Emitter<TodayState> emit, UpdateActivityMinutesDuration event){
     try{
       final initialState = (state as OnCreatingActivity);
+      final duration = int.parse(event.minutesDuration);
       final activity = _getActivityCreationFromExistent(
         initialState.activity,
-        minutesDuration: int.parse(event.minutesDuration)
+        minutesDuration: duration
       );
       final canEnd = activityCompletitionValidator.isCompleted(activity);
       emit(OnCreatingActivity(
-        today: initialState.today,
+        day: initialState.day,
         activity: activity,
         restantWork: initialState.restantWork,
         canEnd: canEnd
@@ -229,7 +272,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       );
       final canEnd = activityCompletitionValidator.isCompleted(activity);
       emit(OnCreatingActivity(
-        today: initialState.today,
+        day: initialState.day,
         activity: activity,
         restantWork: initialState.restantWork,
         canEnd: canEnd
@@ -241,64 +284,82 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
 
   Future<void> _createActivity(Emitter<TodayState> emit)async{
     final initialState = (state as OnCreatingActivity);
+    final activity = initialState.activity;
     try{
-      final activity = initialState.activity;
-      if(activity.work <= initialState.restantWork){
-        emit(OnLoadingTodayDay());
-        var updatedDay = await repository.setActivityToDay(
-          activity,
-          initialState.today
-        );
-        final activities = _getSortedActivities(updatedDay.activities);
-        updatedDay = _createDayFromExistent(
-          updatedDay,
-          activities: activities
-        );
-        final restantWork = _calculateRestantWork(updatedDay);
-        emit(OnShowingTodayDay(
-          today: updatedDay,
-          restantWork: restantWork
-        ));
+      final currentRangeCollides = _currentRangeCollides(
+        emit,
+        initialState
+      );
+      final thereIsEnoughDayWork = activity.work <= initialState.restantWork;
+      if(thereIsEnoughDayWork && !currentRangeCollides){
+        await _endActivityCreation(emit, initialState);
       }else{
         emit(OnCreatingActivityError(
-          today: initialState.today,
-          activity: initialState.activity,
+          day: initialState.day,
+          activity: activity,
           restantWork: initialState.restantWork,
           canEnd: initialState.canEnd,
-          message: insufficientRestantWorkMessage
+          message: currentRangeCollides?
+            currentRangeCollidesWithOtherMessage: 
+            insufficientRestantWorkMessage,
+          type: currentRangeCollides?
+            ErrorType.durationCollides:
+            ErrorType.notEnoughWork
         ));
       }
     }on AppException catch(exception){
       emit(OnCreatingActivityError(
-        today: initialState.today,
-        activity: initialState.activity,
+        day: initialState.day,
+        activity: activity,
         restantWork: initialState.restantWork,
         canEnd: initialState.canEnd,
-        message: exception.message.isNotEmpty? exception.message : unexpectedErrorMessage
+        message: exception.message.isNotEmpty? exception.message : unexpectedErrorMessage,
+        type: ErrorType.general
       ));
     }
+  }
+
+  Future<void> _endActivityCreation(Emitter<TodayState> emit, OnCreatingActivity initialState)async{
+    emit(OnLoadingTodayDay());
+    final day = initialState.day;
+    final activity = initialState.activity;
+    final updatedRestantWork = day.restantWork - activity.work;
+    var updatedDay = await repository.setActivityToDay(
+      activity,
+      day,
+      updatedRestantWork
+    );
+    final activities = _getSortedActivities(updatedDay.activities);
+    updatedDay = _createDayFromExistent(
+      updatedDay,
+      activities: activities
+    );
+    emit(OnShowingTodayDay(
+      day: updatedDay,
+      restantWork: updatedRestantWork
+    ));
+  }
+
+  bool _currentRangeCollides(Emitter<TodayState> emit, OnCreatingActivity initialState){
+    bool currentRangeCollides = false;
+    final activities = initialState.day.activities;
+    for(int i = 0; i < activities.length && !currentRangeCollides; i++){
+      final activity = activities[i];
+      currentRangeCollides |= timeRangeCalificator.timeRangesCollide(
+        initialState.activity.initialTime!,
+        initialState.activity.minutesDuration,
+        activity.initialTime,
+        activity.minutesDuration
+      );
+    }
+    return currentRangeCollides;
   }
 
   void _cancelActivityCreation(Emitter<TodayState> emit){
     final initialState = (state as OnCreatingActivity);
     emit(OnShowingTodayDay(
-      today: initialState.today,
+      day: initialState.day,
       restantWork: initialState.restantWork
     ));
   }
-
-  HabitActivityCreation _getActivityCreationFromExistent(
-    HabitActivityCreation activity,
-    {
-      String? name,
-      CustomTime? initialTime,
-      int? minutesDuration,
-      int? work
-    }
-  ) => HabitActivityCreation(
-    name: name ?? activity.name,
-    initialTime: initialTime ?? activity.initialTime,
-    minutesDuration: minutesDuration ?? activity.minutesDuration,
-    work: work ?? activity.work
-  );
 }

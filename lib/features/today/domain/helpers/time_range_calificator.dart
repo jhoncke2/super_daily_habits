@@ -36,7 +36,6 @@ class TimeRangeCalificatorImpl implements TimeRangeCalificator{
       initialTime1,
       duration1
     );
-    //TODO: Terminar
     return (
       timeIsBetweenTimeRange(
         initialTime1,
@@ -48,6 +47,12 @@ class TimeRangeCalificatorImpl implements TimeRangeCalificator{
         endTime1,
         initialTime2,
         duration2
+      )
+      ||
+      timeIsBetweenTimeRange(
+        initialTime2,
+        initialTime1,
+        duration1
       )
     );
   }
