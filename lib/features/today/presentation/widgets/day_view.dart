@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_tile.dart';
-class TodayView extends StatelessWidget {
+class DayView extends StatelessWidget {
   late ScrollController activitiesController;
   final Day today;
-  TodayView({
+  DayView({
     Key? key,
     required this.today
   }) : super(key: key){

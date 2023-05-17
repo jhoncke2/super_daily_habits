@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
-import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
+import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
 class WorkBar extends StatelessWidget {
   const WorkBar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final blocState = BlocProvider.of<TodayBloc>(context).state as OnTodayDay;
+    final blocState = BlocProvider.of<DayBloc>(context).state as OnTodayDay;
     final dimens = AppDimens();
     return Container(
       width: dimens.getWidthPercentage(1),
@@ -82,7 +82,7 @@ class WorkBar extends StatelessWidget {
           ),
           InkWell(
             onTap: blocState.restantWork > 0? (){
-              BlocProvider.of<TodayBloc>(context).add(InitActivityCreation());
+              BlocProvider.of<DayBloc>(context).add(InitActivityCreation());
             } : null,
             child: Icon(
               Icons.add_rounded,

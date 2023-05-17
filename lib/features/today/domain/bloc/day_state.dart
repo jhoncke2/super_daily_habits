@@ -1,4 +1,4 @@
-part of 'today_bloc.dart';
+part of 'day_bloc.dart';
 
 enum ErrorType{
   general,
@@ -7,25 +7,25 @@ enum ErrorType{
   notEnoughWork
 }
 
-abstract class TodayState extends Equatable {
-  const TodayState();
+abstract class DayState extends Equatable {
+  const DayState();
   
   @override
   List<Object?> get props => [];
 }
 
-class TodayInitial extends TodayState {}
+class TodayInitial extends DayState {}
 
-abstract class OnError extends TodayState{
+abstract class OnError extends DayState{
   String get message;
   ErrorType get type;
 }
 
-class OnLoadingTodayDay extends TodayState {
+class OnLoadingTodayDay extends DayState {
 
 }
 
-abstract class OnTodayDay extends TodayState{
+abstract class OnTodayDay extends DayState{
   final Day day;
   final int restantWork;
   const OnTodayDay({

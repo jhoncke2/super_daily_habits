@@ -7,7 +7,7 @@ import 'package:super_daily_habits/common/data/database.dart' as database;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 
-abstract class TodayLocalAdapter{
+abstract class DayLocalAdapter{
   Map<String, dynamic> getMapFromDay(DayBase day);
   Day getEmptyDayFromMap(Map<String, dynamic> map);
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities);
@@ -17,7 +17,7 @@ abstract class TodayLocalAdapter{
   List<HabitActivity> getActivitiesFromJson(List<Map<String, dynamic>> jsonList);
 }
 
-class TodayLocalAdapterImpl extends TodayLocalAdapter{
+class DayLocalAdapterImpl extends DayLocalAdapter{
 
   static const yearKey = 'year';
   static const monthKey = 'month';

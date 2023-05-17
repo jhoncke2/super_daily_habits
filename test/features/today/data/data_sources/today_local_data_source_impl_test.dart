@@ -3,8 +3,8 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source_impl.dart';
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_adapter.dart';
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_data_source_impl.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
@@ -13,19 +13,19 @@ import 'package:super_daily_habits/features/today/domain/entities/activity/habit
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'today_local_data_source_impl_test.mocks.dart';
 
-late TodayLocalDataSourceImpl todayLocalDataSource;
+late DayLocalDataSourceImpl todayLocalDataSource;
 late MockDatabaseManager dbManager;
-late MockTodayLocalAdapter adapter;
+late MockDayLocalAdapter adapter;
 
 @GenerateMocks([
   DatabaseManager,
-  TodayLocalAdapter
+  DayLocalAdapter
 ])
 void main(){
   setUp((){
-    adapter = MockTodayLocalAdapter();
+    adapter = MockDayLocalAdapter();
     dbManager = MockDatabaseManager();
-    todayLocalDataSource = TodayLocalDataSourceImpl(
+    todayLocalDataSource = DayLocalDataSourceImpl(
       dbManager: dbManager,
       adapter: adapter
     );
@@ -35,6 +35,7 @@ void main(){
   group('get day by id', _testGetDayById);
   group('set activity to day', _testSetActivityToDay);
   group('update restant work', _testUpdateRestantWork);
+  group('delete activity from day', _testDeleteActivityFromDay);
 }
 
 void _testGetDayByDate(){
@@ -136,7 +137,7 @@ void _testGetDayByDate(){
       verify(adapter.getStringMapFromDate(tDate));
       verify(dbManager.queryWhere(
         daysTableName,
-        TodayLocalDataSourceImpl.dayByDateQuery,
+        DayLocalDataSourceImpl.dayByDateQuery,
         [tStringJsonDate]
       ));
       verify(dbManager.queryInnerJoin(
@@ -144,7 +145,7 @@ void _testGetDayByDate(){
         daysActivitiesActivityIdKey,
         activitiesTableName,
         idKey,
-        TodayLocalDataSourceImpl.dayByIdInnerJoinQuery,
+        DayLocalDataSourceImpl.dayByIdInnerJoinQuery,
         [dayId]
       ));
       verify(adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities));
@@ -256,7 +257,7 @@ void _testGetDayById(){
         daysActivitiesActivityIdKey,
         activitiesTableName,
         idKey,
-        TodayLocalDataSourceImpl.dayByIdInnerJoinQuery,
+        DayLocalDataSourceImpl.dayByIdInnerJoinQuery,
         [tDayId]
       ));
       verify(adapter.getFilledDayWithActivitiesFromMap(jsonDay, jsonActivities));
@@ -385,5 +386,87 @@ void _testUpdateRestantWork(){
       jsonDay,
       dayId
     ));
+  });
+}
+
+void _testDeleteActivityFromDay(){
+  late int activityId;
+  late HabitActivity activity;
+  late Day day;
+  late int restantActivitiesCounts;
+  setUp((){
+    activityId = 100;
+    activity = HabitActivity(
+      id: activityId,
+      name: 'ha_100',
+      minutesDuration: 60,
+      work: 100,
+      initialTime: const CustomTime(
+        hour: 10,
+        minute: 20
+      )
+    );
+    day = Day(
+      id: 10,
+      activities: [
+        activity
+      ],
+      date: CustomDate.fromDateTime(
+        DateTime.now()
+      ),
+      totalWork: 150,
+      restantWork: 50
+    );
+  });
+
+  test('Debe llamar los métodos esperados cuando la cantidad restante de activities es 2', ()async{
+    //verify(dbManager.remove(tableName, id))
+    when(dbManager.queryCount(
+      daysActivitiesTableName,
+      any,
+      any
+    )).thenAnswer((_) async => 2);
+    await todayLocalDataSource.deleteActivityFromDay(activity, day);
+    verify(dbManager.removeWhere(
+      daysActivitiesTableName,
+      DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
+      [activity.id]
+    ));
+    verify(dbManager.queryCount(
+      daysActivitiesTableName,
+      DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
+      [activityId]
+    ));
+    verifyNever(
+      dbManager.remove(
+        activitiesTableName,
+        any
+      )
+    );
+  });
+
+  test('Debe llamar los métodos esperados cuando la cantidad restante de activities es 0', ()async{
+    when(dbManager.queryCount(
+      daysActivitiesTableName,
+      any,
+      any
+    )).thenAnswer((_) async => 0);
+    await todayLocalDataSource.deleteActivityFromDay(activity, day);
+    verify(dbManager.removeWhere(
+      daysActivitiesTableName,
+      DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
+      [activity.id]
+    ));
+    verify(dbManager.queryCount(
+      daysActivitiesTableName,
+      DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
+      [activityId]
+    ));
+    verify(
+      dbManager.remove(
+        activitiesTableName,
+        activityId
+      )
+    );
   });
 }

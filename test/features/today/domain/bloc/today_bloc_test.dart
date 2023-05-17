@@ -4,7 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
-import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
+import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
@@ -14,18 +14,18 @@ import 'package:super_daily_habits/features/today/domain/entities/day/day_base.d
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
-import 'package:super_daily_habits/features/today/domain/today_repository.dart';
+import 'package:super_daily_habits/features/today/domain/day_repository.dart';
 import 'today_bloc_test.mocks.dart';
 
-late TodayBloc todayBloc;
-late MockTodayRepository todayRepository;
+late DayBloc todayBloc;
+late MockDayRepository todayRepository;
 late MockCommonRepository commonRepository;
 late MockCurrentDateGetter currentDateGetter;
 late MockActivityCompletitionValidator activityCompletitionValidator;
 late MockTimeRangeCalificator timeRangeCalificator;
 
 @GenerateMocks([
-  TodayRepository,
+  DayRepository,
   CommonRepository,
   CurrentDateGetter,
   ActivityCompletitionValidator,
@@ -37,8 +37,8 @@ void main(){
     activityCompletitionValidator = MockActivityCompletitionValidator();
     currentDateGetter = MockCurrentDateGetter();
     commonRepository = MockCommonRepository();
-    todayRepository = MockTodayRepository();
-    todayBloc = TodayBloc(
+    todayRepository = MockDayRepository();
+    todayBloc = DayBloc(
       repository: todayRepository,
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
@@ -392,7 +392,7 @@ void _testInitActivityCreation(){
         OnShowingTodayDayError(
           day: today,
           restantWork: restantWorK,
-          message: TodayBloc.dayTimeFilledMessage,
+          message: DayBloc.dayTimeFilledMessage,
           type: ErrorType.general
         )
       ];
@@ -583,7 +583,7 @@ void _testUpdateActivityInitialTime(){
             activity: initActivity,
             restantWork: tRestantWork,
             canEnd: false,
-            message: TodayBloc.currentRangeCollidesWithOtherMessage,
+            message: DayBloc.currentRangeCollidesWithOtherMessage,
             type: ErrorType.initTimeCollides
           )
         ];
@@ -610,7 +610,7 @@ void _testUpdateActivityInitialTime(){
           activity: initActivity,
           restantWork: tRestantWork,
           canEnd: false,
-          message: TodayBloc.initialTimeIsOnAnotherActivityRangeMessage,
+          message: DayBloc.initialTimeIsOnAnotherActivityRangeMessage,
           type: ErrorType.initTimeCollides
         )
       ];
@@ -1016,7 +1016,7 @@ void _testCreateActivity(){
         activity: activity,
         restantWork: initRestantWork,
         canEnd: true,
-        message: TodayBloc.insufficientRestantWorkMessage,
+        message: DayBloc.insufficientRestantWorkMessage,
         type: ErrorType.notEnoughWork
       )
     ];
@@ -1042,7 +1042,7 @@ void _testCreateActivity(){
         activity: activity,
         restantWork: initRestantWork,
         canEnd: true,
-        message: TodayBloc.currentRangeCollidesWithOtherMessage,
+        message: DayBloc.currentRangeCollidesWithOtherMessage,
         type: ErrorType.durationCollides
       )
     ];
@@ -1105,7 +1105,7 @@ void _testCreateActivity(){
         activity: activity,
         restantWork: initRestantWork,
         canEnd: true,
-        message: TodayBloc.unexpectedErrorMessage,
+        message: DayBloc.unexpectedErrorMessage,
         type: ErrorType.general
       )
     ];

@@ -1,18 +1,20 @@
 import 'package:super_daily_habits/common/data/database.dart';
 import 'package:super_daily_habits/common/domain/exceptions.dart';
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart';
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_adapter.dart';
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_data_source.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 
-class TodayLocalDataSourceImpl implements TodayLocalDataSource{
+class DayLocalDataSourceImpl implements DayLocalDataSource{
   static const dayByDateQuery = '$daysDateKey = ?';
   static const dayByIdInnerJoinQuery = '$daysActivitiesTableName.$daysActivitiesDayIdKey = ?';
+  static const activityByIdOnDaysActivitiesQuery = '$daysActivitiesActivityIdKey = ?';
   final DatabaseManager dbManager;
-  final TodayLocalAdapter adapter;
-  TodayLocalDataSourceImpl({
+  final DayLocalAdapter adapter;
+  DayLocalDataSourceImpl({
     required this.dbManager,
     required this.adapter
   });
@@ -86,6 +88,20 @@ class TodayLocalDataSourceImpl implements TodayLocalDataSource{
       daysTableName,
       jsonDay,
       day.id
+    );
+  }
+
+  @override
+  Future<void> deleteActivityFromDay(HabitActivity habit, Day day)async{
+    await dbManager.removeWhere(
+      daysActivitiesTableName,
+      activityByIdOnDaysActivitiesQuery,
+      [habit.id]
+    );
+    await dbManager.queryCount(
+      daysActivitiesTableName,
+      activityByIdOnDaysActivitiesQuery,
+      [habit.id]
     );
   }
 }

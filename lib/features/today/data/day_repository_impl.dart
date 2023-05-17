@@ -1,13 +1,14 @@
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_data_source.dart';
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_data_source.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
-import 'package:super_daily_habits/features/today/domain/today_repository.dart';
+import 'package:super_daily_habits/features/today/domain/day_repository.dart';
 
-class TodayRepositoryImpl implements TodayRepository{
-  final TodayLocalDataSource localDataSource;
-  TodayRepositoryImpl({
+class DayRepositoryImpl implements DayRepository{
+  final DayLocalDataSource localDataSource;
+  DayRepositoryImpl({
     required this.localDataSource
   });
 
@@ -32,5 +33,11 @@ class TodayRepositoryImpl implements TodayRepository{
   Future<Day> updateActivityRestantWork(int restantWork, Day day)async{
     await localDataSource.updateRestantWork(restantWork, day);
     return await localDataSource.getDayById(day.id);
+  }
+
+  @override
+  Future<Day> deleteHabitFromDay(HabitActivity habit, Day day)async{
+    // TODO: implement deleteHabitFromDay
+    throw UnimplementedError();
   }
 }

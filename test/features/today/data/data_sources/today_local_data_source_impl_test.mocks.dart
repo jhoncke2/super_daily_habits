@@ -7,7 +7,7 @@ import 'dart:async' as _i4;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:super_daily_habits/common/data/database.dart' as _i3;
-import 'package:super_daily_habits/features/today/data/data_sources/today_local_adapter.dart'
+import 'package:super_daily_habits/features/today/data/data_sources/day_local_adapter.dart'
     as _i5;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart'
     as _i9;
@@ -175,13 +175,48 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
         returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i4.Future<List<Map<String, dynamic>>>);
+  @override
+  _i4.Future<int> queryCount(
+    String? tableName,
+    String? whereStatement,
+    List<dynamic>? whereVariables,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #queryCount,
+          [
+            tableName,
+            whereStatement,
+            whereVariables,
+          ],
+        ),
+        returnValue: _i4.Future<int>.value(0),
+      ) as _i4.Future<int>);
+  @override
+  _i4.Future<void> removeWhere(
+    String? tableName,
+    String? whereStatement,
+    List<dynamic>? whereVariables,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeWhere,
+          [
+            tableName,
+            whereStatement,
+            whereVariables,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
 
-/// A class which mocks [TodayLocalAdapter].
+/// A class which mocks [DayLocalAdapter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTodayLocalAdapter extends _i1.Mock implements _i5.TodayLocalAdapter {
-  MockTodayLocalAdapter() {
+class MockDayLocalAdapter extends _i1.Mock implements _i5.DayLocalAdapter {
+  MockDayLocalAdapter() {
     _i1.throwOnMissingStub(this);
   }
 

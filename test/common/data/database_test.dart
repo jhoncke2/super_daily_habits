@@ -18,6 +18,8 @@ void main(){
   });
 
   group('query inner join', _testQueryInnerJoin);
+  group('query count', _testQueryCount);
+  group('remove where', _testRemoveWhere);
 }
 
 void _testQueryInnerJoin(){
@@ -79,5 +81,71 @@ WHERE $whereStatement
       whereVariables
     );
     expect(result, tQueryResult);
+  });
+}
+
+void _testQueryCount(){
+  late String tableName;
+  late String whereStatement;
+  late List whereVariables;
+  late List<Map<String, Object>> dbResponse;
+  setUp((){
+    tableName = 'table_name';
+    whereStatement = 'where_statement';
+    whereVariables = [
+      1,
+      'a'
+    ];
+    dbResponse = [
+      {
+        'response': 2
+      }
+    ];
+    when(db.rawQuery(any, any))
+        .thenAnswer((_) async => dbResponse);
+  });
+
+  test('Debe llamar los métodos esperados', ()async{
+    await dbManager.queryCount(tableName, whereStatement, whereVariables);
+    verify(db.rawQuery(
+'''
+SELECT COUNT($idKey)
+FROM $tableName
+WHERE $whereStatement
+''',
+    whereVariables
+    ));
+  });
+}
+
+void _testRemoveWhere(){
+  late String tableName;
+  late String whereStatement;
+  late List whereVariables;
+  setUp((){
+    tableName = 'table_name';
+    whereStatement = 'where_statement';
+    whereVariables = [
+      1,
+      'b'
+    ];
+    when(db.delete(
+      any,
+      where: anyNamed('where'),
+      whereArgs: anyNamed('whereArgs')
+    )).thenAnswer((_) async => 1);
+  });
+
+  test('Debe llamar los métodos esperados', ()async{
+    await dbManager.removeWhere(
+      tableName,
+      whereStatement,
+      whereVariables
+    );
+    verify(db.delete(
+      tableName,
+      where: whereStatement,
+      whereArgs: whereVariables
+    ));
   });
 }

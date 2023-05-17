@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/common/presentation/widgets/error_panel.dart';
-import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
+import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator/activity_creator.dart';
-import 'package:super_daily_habits/features/today/presentation/widgets/today_view.dart';
+import 'package:super_daily_habits/features/today/presentation/widgets/day_view.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/work_bar.dart';
 import '../utils.dart' as utils;
-class TodayLoaded extends StatelessWidget {
+class DayLoaded extends StatelessWidget {
   final Day today;
-  const TodayLoaded({
+  const DayLoaded({
     Key? key,
     required this.today
   }) : super(key: key);
@@ -18,7 +18,7 @@ class TodayLoaded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dimens = AppDimens();
-    final blocState = BlocProvider.of<TodayBloc>(context).state as OnTodayDay;
+    final blocState = BlocProvider.of<DayBloc>(context).state as OnTodayDay;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -57,7 +57,7 @@ class TodayLoaded extends StatelessWidget {
         ),
         Visibility(
           visible: blocState is OnShowingTodayDay,
-          child: TodayView(today: today)
+          child: DayView(today: today)
         ),
         Visibility(
           visible: blocState is OnCreatingActivity,

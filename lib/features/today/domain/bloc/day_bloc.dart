@@ -12,30 +12,30 @@ import 'package:super_daily_habits/features/today/domain/entities/day/day_base.d
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
-import 'package:super_daily_habits/features/today/domain/today_repository.dart';
-part 'today_event.dart';
-part 'today_state.dart';
+import 'package:super_daily_habits/features/today/domain/day_repository.dart';
+part 'day_event.dart';
+part 'day_state.dart';
 
-class TodayBloc extends Bloc<TodayEvent, TodayState> {
+class DayBloc extends Bloc<DayEvent, DayState> {
   static const unexpectedErrorMessage = 'Ha ocurdido un error inesperado';
   static const insufficientRestantWorkMessage = 'No hay suficiente trabajo disponible';
   static const dayTimeFilledMessage = 'El tiempo del día está completamente lleno';
   static const initialTimeIsOnAnotherActivityRangeMessage = 'El tiempo elegido colisiona con el rango de tiempo de otra actividad';
   static const currentRangeCollidesWithOtherMessage = 'El rango de tiempo de esta actividad colisiona con el de otra';
   static const maxDayMinutes = 1440;
-  final TodayRepository repository;
+  final DayRepository repository;
   final CommonRepository commonRepository;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
   final TimeRangeCalificator timeRangeCalificator;
-  TodayBloc({
+  DayBloc({
     required this.repository,
     required this.commonRepository,
     required this.currentDateGetter,
     required this.activityCompletitionValidator,
     required this.timeRangeCalificator
   }) : super(TodayInitial()) {
-    on<TodayEvent>((event, emit)async{
+    on<DayEvent>((event, emit)async{
       if(event is LoadDay){
         await _loadDay(emit, event);
       }else if(event is InitActivityCreation){
@@ -56,7 +56,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     });
   }
 
-  Future<void> _loadDay(Emitter<TodayState> emit, LoadDay event)async{
+  Future<void> _loadDay(Emitter<DayState> emit, LoadDay event)async{
     emit(OnLoadingTodayDay());
     late CustomDate date;
     if(event.date == null){
@@ -127,7 +127,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     return totalWork - usedWork;
   }
 
-  void _initActivityCreation(Emitter<TodayState> emit){
+  void _initActivityCreation(Emitter<DayState> emit){
     final initialState = state as OnTodayDay;
     final totalDuration = initialState.day.activities.fold<int>(
       0,
@@ -145,7 +145,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     }
   }
 
-  void _continueActivityCreationWithEnoughDayMinutes(Emitter<TodayState> emit, OnTodayDay initialState){
+  void _continueActivityCreationWithEnoughDayMinutes(Emitter<DayState> emit, OnTodayDay initialState){
     final today = initialState.day;
     const activity = HabitActivityCreation(
       name: '',
@@ -162,7 +162,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     ));
   }
 
-  void _updateActivityName(Emitter<TodayState> emit, UpdateActivityName event){
+  void _updateActivityName(Emitter<DayState> emit, UpdateActivityName event){
     final initialState = (state as OnCreatingActivity);
     final activity = _getActivityCreationFromExistent(
       initialState.activity,
@@ -192,7 +192,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     work: work ?? activity.work
   );
 
-  void _updateActivityInitialTime(Emitter<TodayState> emit, UpdateActivityInitialTime event){
+  void _updateActivityInitialTime(Emitter<DayState> emit, UpdateActivityInitialTime event){
     if(event.initialTime != null){
       final initialState = (state as OnCreatingActivity);
       final formattedInitialTime = CustomTime(
@@ -243,7 +243,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     }
   }
 
-  void _updateActivityMinutesDuration(Emitter<TodayState> emit, UpdateActivityMinutesDuration event){
+  void _updateActivityMinutesDuration(Emitter<DayState> emit, UpdateActivityMinutesDuration event){
     try{
       final initialState = (state as OnCreatingActivity);
       final duration = int.parse(event.minutesDuration);
@@ -263,7 +263,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     }
   }
 
-  void _updateActivityWork(Emitter<TodayState> emit, UpdateActivityWork event){
+  void _updateActivityWork(Emitter<DayState> emit, UpdateActivityWork event){
     try{
       final initialState = (state as OnCreatingActivity);
       final activity = _getActivityCreationFromExistent(
@@ -282,7 +282,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     }
   }
 
-  Future<void> _createActivity(Emitter<TodayState> emit)async{
+  Future<void> _createActivity(Emitter<DayState> emit)async{
     final initialState = (state as OnCreatingActivity);
     final activity = initialState.activity;
     try{
@@ -319,7 +319,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     }
   }
 
-  Future<void> _endActivityCreation(Emitter<TodayState> emit, OnCreatingActivity initialState)async{
+  Future<void> _endActivityCreation(Emitter<DayState> emit, OnCreatingActivity initialState)async{
     emit(OnLoadingTodayDay());
     final day = initialState.day;
     final activity = initialState.activity;
@@ -340,7 +340,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     ));
   }
 
-  bool _currentRangeCollides(Emitter<TodayState> emit, OnCreatingActivity initialState){
+  bool _currentRangeCollides(Emitter<DayState> emit, OnCreatingActivity initialState){
     bool currentRangeCollides = false;
     final activities = initialState.day.activities;
     for(int i = 0; i < activities.length && !currentRangeCollides; i++){
@@ -355,7 +355,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     return currentRangeCollides;
   }
 
-  void _cancelActivityCreation(Emitter<TodayState> emit){
+  void _cancelActivityCreation(Emitter<DayState> emit){
     final initialState = (state as OnCreatingActivity);
     emit(OnShowingTodayDay(
       day: initialState.day,

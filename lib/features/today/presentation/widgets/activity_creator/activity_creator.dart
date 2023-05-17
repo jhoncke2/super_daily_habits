@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
-import 'package:super_daily_habits/features/today/domain/bloc/today_bloc.dart';
+import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator/activity_input.dart';
 import '../../utils.dart' as utils;
 
@@ -16,7 +16,7 @@ class ActivityCreator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dimens = AppDimens();
-    final blocState = BlocProvider.of<TodayBloc>(context).state as OnCreatingActivity;
+    final blocState = BlocProvider.of<DayBloc>(context).state as OnCreatingActivity;
     return Expanded(
       child: Padding(
         padding: EdgeInsets.symmetric(
@@ -33,7 +33,7 @@ class ActivityCreator extends StatelessWidget {
             ),
             TextField(
               onChanged: (newValue){
-                BlocProvider.of<TodayBloc>(context).add(UpdateActivityName(newValue));
+                BlocProvider.of<DayBloc>(context).add(UpdateActivityName(newValue));
               },
               decoration: const InputDecoration(
                 hintText: 'Nombre'
@@ -56,7 +56,7 @@ class ActivityCreator extends StatelessWidget {
                       const TimeOfDay(hour: 0, minute: 0):
                       utils.getTimeOfDayFromCustomTime(blocState.activity.initialTime!)
                 );
-                BlocProvider.of<TodayBloc>(context).add(UpdateActivityInitialTime(time));
+                BlocProvider.of<DayBloc>(context).add(UpdateActivityInitialTime(time));
               },
               child: (
                 Text(
@@ -80,7 +80,7 @@ class ActivityCreator extends StatelessWidget {
             ActivityInput(
               hintText: 'Duración',
               onChanged: (newValue){
-                BlocProvider.of<TodayBloc>(context).add(UpdateActivityMinutesDuration(newValue));
+                BlocProvider.of<DayBloc>(context).add(UpdateActivityMinutesDuration(newValue));
               },
               isOnError: (
                 blocState is OnError && (blocState as OnError).type == ErrorType.durationCollides
@@ -93,7 +93,7 @@ class ActivityCreator extends StatelessWidget {
             ActivityInput(
               hintText: 'Trabajo',
               onChanged: (newValue){
-                BlocProvider.of<TodayBloc>(context).add(UpdateActivityWork(newValue));
+                BlocProvider.of<DayBloc>(context).add(UpdateActivityWork(newValue));
               },
               isOnError: (
                 blocState is OnError && (blocState as OnError).type == ErrorType.notEnoughWork
@@ -110,7 +110,7 @@ class ActivityCreator extends StatelessWidget {
               ),
               onPressed: (blocState.canEnd)?
                 (){
-                  BlocProvider.of<TodayBloc>(context).add(CreateActivity());
+                  BlocProvider.of<DayBloc>(context).add(CreateActivity());
                 }: null,
               color: AppColors.primary,
               child: Text(

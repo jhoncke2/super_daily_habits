@@ -6,25 +6,27 @@
 import 'dart:async' as _i5;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:super_daily_habits/common/domain/common_repository.dart' as _i8;
+import 'package:super_daily_habits/common/domain/common_repository.dart' as _i9;
+import 'package:super_daily_habits/features/today/domain/day_repository.dart'
+    as _i4;
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart'
+    as _i8;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart'
     as _i6;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
     as _i3;
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart'
-    as _i12;
+    as _i13;
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart'
     as _i2;
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart'
     as _i7;
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart'
-    as _i10;
-import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
-    as _i9;
-import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
     as _i11;
-import 'package:super_daily_habits/features/today/domain/today_repository.dart'
-    as _i4;
+import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
+    as _i10;
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
+    as _i12;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -57,11 +59,11 @@ class _FakeCustomDate_1 extends _i1.SmartFake implements _i3.CustomDate {
         );
 }
 
-/// A class which mocks [TodayRepository].
+/// A class which mocks [DayRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
-  MockTodayRepository() {
+class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
+  MockDayRepository() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -144,12 +146,36 @@ class MockTodayRepository extends _i1.Mock implements _i4.TodayRepository {
           ),
         )),
       ) as _i5.Future<_i2.Day>);
+  @override
+  _i5.Future<_i2.Day> deleteHabitFromDay(
+    _i8.HabitActivity? habit,
+    _i2.Day? day,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteHabitFromDay,
+          [
+            habit,
+            day,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+          this,
+          Invocation.method(
+            #deleteHabitFromDay,
+            [
+              habit,
+              day,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Day>);
 }
 
 /// A class which mocks [CommonRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCommonRepository extends _i1.Mock implements _i8.CommonRepository {
+class MockCommonRepository extends _i1.Mock implements _i9.CommonRepository {
   MockCommonRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -176,7 +202,7 @@ class MockCommonRepository extends _i1.Mock implements _i8.CommonRepository {
 /// A class which mocks [CurrentDateGetter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCurrentDateGetter extends _i1.Mock implements _i9.CurrentDateGetter {
+class MockCurrentDateGetter extends _i1.Mock implements _i10.CurrentDateGetter {
   MockCurrentDateGetter() {
     _i1.throwOnMissingStub(this);
   }
@@ -201,7 +227,7 @@ class MockCurrentDateGetter extends _i1.Mock implements _i9.CurrentDateGetter {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockActivityCompletitionValidator extends _i1.Mock
-    implements _i10.ActivityCompletitionValidator {
+    implements _i11.ActivityCompletitionValidator {
   MockActivityCompletitionValidator() {
     _i1.throwOnMissingStub(this);
   }
@@ -220,15 +246,15 @@ class MockActivityCompletitionValidator extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTimeRangeCalificator extends _i1.Mock
-    implements _i11.TimeRangeCalificator {
+    implements _i12.TimeRangeCalificator {
   MockTimeRangeCalificator() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
   bool timeIsBetweenTimeRange(
-    _i12.CustomTime? time,
-    _i12.CustomTime? rangeInit,
+    _i13.CustomTime? time,
+    _i13.CustomTime? rangeInit,
     int? minutesDuration,
   ) =>
       (super.noSuchMethod(
@@ -244,9 +270,9 @@ class MockTimeRangeCalificator extends _i1.Mock
       ) as bool);
   @override
   bool timeRangesCollide(
-    _i12.CustomTime? initialTime1,
+    _i13.CustomTime? initialTime1,
     int? duration1,
-    _i12.CustomTime? initialTime2,
+    _i13.CustomTime? initialTime2,
     int? duration2,
   ) =>
       (super.noSuchMethod(
