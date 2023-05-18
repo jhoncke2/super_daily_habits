@@ -49,7 +49,8 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
   @override
   Map<String, dynamic> getMapFromDay(DayBase day) => {
     database.daysDateKey: getStringMapFromDate(day.date),
-    database.daysWorkKey: day.totalWork
+    database.daysWorkKey: day.totalWork,
+    database.daysRestantWorkKey: day.restantWork
   };
 
   @override

@@ -67,16 +67,19 @@ class OnShowingTodayDayError extends OnShowingTodayDay implements OnError{
 
 class OnCreatingActivity extends OnTodayDay{
   final HabitActivityCreation activity;
+  final List<HabitActivity> repeatablesActivities;
   final bool canEnd;
   const OnCreatingActivity({
     required super.day,
-    required this.activity,
     required super.restantWork,
+    required this.activity,
+    required this.repeatablesActivities,
     required this.canEnd
   });
   @override
   List<Object> get props => [
     activity,
+    repeatablesActivities,
     canEnd
   ];
 }
@@ -90,6 +93,7 @@ class OnCreatingActivityError extends OnCreatingActivity implements OnError{
     required super.day,
     required super.activity,
     required super.restantWork,
+    required super.repeatablesActivities,
     required super.canEnd,
     required this.message,
     required this.type

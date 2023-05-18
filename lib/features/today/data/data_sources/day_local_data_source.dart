@@ -11,4 +11,5 @@ abstract class DayLocalDataSource{
   Future<void> setActivityToDay(HabitActivityCreation activity, Day day);
   Future<void> updateRestantWork(int restantWork, Day day);
   Future<void> deleteActivityFromDay(HabitActivity habit, Day day);
+  Future<List<HabitActivity>> getAllRepeatableActivities();
 }

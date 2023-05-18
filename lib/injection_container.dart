@@ -7,7 +7,6 @@ import 'package:super_daily_habits/common/data/shared_preferences_manager.dart';
 import 'package:super_daily_habits/common/domain/common_repository.dart';
 import 'package:super_daily_habits/common/domain/custom_time_manager.dart';
 import 'package:super_daily_habits/common/presentation/providers/nav_provider.dart';
-import 'package:super_daily_habits/features/today/data/data_sources/fake/data_base_injecter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/day_local_adapter.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/day_local_data_source.dart';
 import 'package:super_daily_habits/features/today/data/data_sources/day_local_data_source_impl.dart';
@@ -51,13 +50,6 @@ Future<void> init() async {
   sl.registerLazySingleton<DayLocalAdapter>(
     () => DayLocalAdapterImpl()
   );
-  if(!useRealData){
-    final databaseInjecter = DataBaseInjecter(
-      databaseManager: sl<DatabaseManager>(),
-      adapter: sl<DayLocalAdapter>()
-    );
-    await databaseInjecter.injectFakeData();
-  }
   sl.registerLazySingleton<DayLocalDataSource>(
     () => DayLocalDataSourceImpl(
       dbManager: sl<DatabaseManager>(),

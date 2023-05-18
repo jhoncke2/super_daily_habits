@@ -12,6 +12,7 @@ class DayLocalDataSourceImpl implements DayLocalDataSource{
   static const dayByDateQuery = '$daysDateKey = ?';
   static const dayByIdInnerJoinQuery = '$daysActivitiesTableName.$daysActivitiesDayIdKey = ?';
   static const activityByIdOnDaysActivitiesQuery = '$daysActivitiesActivityIdKey = ?';
+  static const activitiesByRepeatablesQuery = '$activitiesIsRepeatableKey = ?';
   final DatabaseManager dbManager;
   final DayLocalAdapter adapter;
   DayLocalDataSourceImpl({
@@ -103,5 +104,15 @@ class DayLocalDataSourceImpl implements DayLocalDataSource{
       activityByIdOnDaysActivitiesQuery,
       [habit.id]
     );
+  }
+  
+  @override
+  Future<List<HabitActivity>> getAllRepeatableActivities()async{
+    final dbActivities = await dbManager.queryWhere(
+      activitiesTableName,
+      activitiesByRepeatablesQuery,
+      [1]
+    );
+    return adapter.getActivitiesFromJson(dbActivities);
   }
 }

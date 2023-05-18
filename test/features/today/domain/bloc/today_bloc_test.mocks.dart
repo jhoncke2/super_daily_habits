@@ -170,6 +170,16 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
           ),
         )),
       ) as _i5.Future<_i2.Day>);
+  @override
+  _i5.Future<List<_i8.HabitActivity>> getAllRepeatableActivities() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllRepeatableActivities,
+          [],
+        ),
+        returnValue:
+            _i5.Future<List<_i8.HabitActivity>>.value(<_i8.HabitActivity>[]),
+      ) as _i5.Future<List<_i8.HabitActivity>>);
 }
 
 /// A class which mocks [CommonRepository].

@@ -10,4 +10,5 @@ abstract class DayRepository{
   Future<Day> createDay(DayBase day);
   Future<Day> updateActivityRestantWork(int restantWork, Day day);
   Future<Day> deleteHabitFromDay(HabitActivity habit, Day day);
+  Future<List<HabitActivity>> getAllRepeatableActivities();
 }

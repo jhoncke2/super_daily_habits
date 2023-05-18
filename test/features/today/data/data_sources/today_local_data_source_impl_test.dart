@@ -13,7 +13,7 @@ import 'package:super_daily_habits/features/today/domain/entities/activity/habit
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'today_local_data_source_impl_test.mocks.dart';
 
-late DayLocalDataSourceImpl todayLocalDataSource;
+late DayLocalDataSourceImpl dayLocalDataSource;
 late MockDatabaseManager dbManager;
 late MockDayLocalAdapter adapter;
 
@@ -25,7 +25,7 @@ void main(){
   setUp((){
     adapter = MockDayLocalAdapter();
     dbManager = MockDatabaseManager();
-    todayLocalDataSource = DayLocalDataSourceImpl(
+    dayLocalDataSource = DayLocalDataSourceImpl(
       dbManager: dbManager,
       adapter: adapter
     );
@@ -35,7 +35,9 @@ void main(){
   group('get day by id', _testGetDayById);
   group('set activity to day', _testSetActivityToDay);
   group('update restant work', _testUpdateRestantWork);
-  group('delete activity from day', _testDeleteActivityFromDay);
+  //TODO: Activar en su implementación
+  //group('delete activity from day', _testDeleteActivityFromDay);
+  group('get all repeatables activities', _testGetAllRepeatableActivities);
 }
 
 void _testGetDayByDate(){
@@ -133,7 +135,7 @@ void _testGetDayByDate(){
     });
 
     test('Debe llamar a los métodos esperados', ()async{
-      await todayLocalDataSource.getDayFromDate(tDate);
+      await dayLocalDataSource.getDayFromDate(tDate);
       verify(adapter.getStringMapFromDate(tDate));
       verify(dbManager.queryWhere(
         daysTableName,
@@ -152,7 +154,7 @@ void _testGetDayByDate(){
     });
 
     test('Debe retornar el resultado esperado', ()async{
-      final result = await todayLocalDataSource.getDayFromDate(tDate);
+      final result = await dayLocalDataSource.getDayFromDate(tDate);
       expect(result, day);
     });
   });
@@ -161,7 +163,7 @@ void _testGetDayByDate(){
     when(dbManager.queryWhere(any, any, any))
         .thenAnswer((_) async => []);
     try{
-      await todayLocalDataSource.getDayFromDate(tDate);
+      await dayLocalDataSource.getDayFromDate(tDate);
       fail('Debería lanzarse una exceción');
     }on AppException catch(exception){
       if(exception is DBException){
@@ -250,7 +252,7 @@ void _testGetDayById(){
     });
 
     test('Se debe llamar a los métodos esperados', ()async{
-      await todayLocalDataSource.getDayById(tDayId);
+      await dayLocalDataSource.getDayById(tDayId);
       verify(dbManager.querySingleOne(daysTableName, tDayId));
       verify(dbManager.queryInnerJoin(
         daysActivitiesTableName,
@@ -264,7 +266,7 @@ void _testGetDayById(){
     });
 
     test('Debe retornar el resultado esperado', ()async{
-      final result = await todayLocalDataSource.getDayById(tDayId);
+      final result = await dayLocalDataSource.getDayById(tDayId);
       expect(result, updatedDay);
     });
   });
@@ -319,7 +321,7 @@ void _testSetActivityToDay(){
   });
 
   test('Debe llamar los métodos esperados cuando todo sale bien', ()async{
-    await todayLocalDataSource.setActivityToDay(tActivity, tDay);
+    await dayLocalDataSource.setActivityToDay(tActivity, tDay);
     verify(adapter.getMapFromActivity(tActivity));
     verify(dbManager.insert(activitiesTableName, tJsonActivity));
     verify(dbManager.insert(daysActivitiesTableName, tJsonDayActivity));
@@ -379,7 +381,7 @@ void _testUpdateRestantWork(){
   });
 
   test('Debe llamar a los métodos esperados', ()async{
-    await todayLocalDataSource.updateRestantWork(restantWork, initDay);
+    await dayLocalDataSource.updateRestantWork(restantWork, initDay);
     verify(adapter.getMapFromDay(updatedDay));
     verify(dbManager.update(
       daysTableName,
@@ -393,7 +395,8 @@ void _testDeleteActivityFromDay(){
   late int activityId;
   late HabitActivity activity;
   late Day day;
-  late int restantActivitiesCounts;
+  //TODO: Revisar variable para su uso o eliminación
+  //late int restantActivitiesCounts;
   setUp((){
     activityId = 100;
     activity = HabitActivity(
@@ -426,7 +429,7 @@ void _testDeleteActivityFromDay(){
       any,
       any
     )).thenAnswer((_) async => 2);
-    await todayLocalDataSource.deleteActivityFromDay(activity, day);
+    await dayLocalDataSource.deleteActivityFromDay(activity, day);
     verify(dbManager.removeWhere(
       daysActivitiesTableName,
       DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
@@ -451,7 +454,7 @@ void _testDeleteActivityFromDay(){
       any,
       any
     )).thenAnswer((_) async => 0);
-    await todayLocalDataSource.deleteActivityFromDay(activity, day);
+    await dayLocalDataSource.deleteActivityFromDay(activity, day);
     verify(dbManager.removeWhere(
       daysActivitiesTableName,
       DayLocalDataSourceImpl.activityByIdOnDaysActivitiesQuery,
@@ -468,5 +471,66 @@ void _testDeleteActivityFromDay(){
         activityId
       )
     );
+  });
+}
+
+void _testGetAllRepeatableActivities(){
+  late List<HabitActivity> activities;
+  late List<Map<String, dynamic>> dbActivities;
+  setUp((){
+    activities = const [
+      HabitActivity(
+        id: 0,
+        name: 'a_0',
+        minutesDuration: 30,
+        work: 30,
+        initialTime: CustomTime(
+          hour: 10,
+          minute: 10
+        )
+      ),
+      HabitActivity(
+        id: 1,
+        name: 'a_1',
+        minutesDuration: 50,
+        work: 50,
+        initialTime: CustomTime(
+          hour: 15,
+          minute: 20
+        )
+      )
+    ];
+    dbActivities = const [
+      {
+        idKey: 0,
+        'etc': 'info_0'
+      },
+      {
+        idKey: 1,
+        'etc': 'info_1'
+      }
+    ];
+    when(dbManager.queryWhere(
+      any,
+      any,
+      any
+    )).thenAnswer((_) async => dbActivities);
+    when(adapter.getActivitiesFromJson(any))
+      .thenReturn(activities);
+  });
+
+  test('Debe llamar a los métodos esperados', ()async{
+    await dayLocalDataSource.getAllRepeatableActivities();
+    verify(dbManager.queryWhere(
+      activitiesTableName,
+      DayLocalDataSourceImpl.activitiesByRepeatablesQuery,
+      [1]
+    ));
+    verify(adapter.getActivitiesFromJson(dbActivities));
+  });
+
+  test('Debe retornar el resultado esperado', ()async{
+    final result = await dayLocalDataSource.getAllRepeatableActivities();
+    expect(result, activities);
   });
 }

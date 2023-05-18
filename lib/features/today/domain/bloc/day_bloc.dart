@@ -9,6 +9,7 @@ import 'package:super_daily_habits/features/today/domain/entities/custom_time.da
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
+import 'package:super_daily_habits/features/today/domain/entities/initial_time_addition_restriction.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -65,34 +66,42 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       date = CustomDate.fromDateTime(event.date!);
     }
     try{
-      var today = await repository.getDayByDate(date);
-      final activities = _getSortedActivities(today.activities);
-      today = _createDayFromExistent(
-        today,
-        activities: activities
-      );
-      final restantWork = _calculateRestantWork(
-        today.totalWork,
-        today.activities
-      );
-      emit(OnShowingTodayDay(
-        day: today,
-        restantWork: restantWork
-      ));
+      await _tryLoadDay(date, emit);
     }on DBException catch(exception){
       if(exception.type == DBExceptionType.empty){
-        final commonWork = await commonRepository.getCommonWork();
-        final newDay = await repository.createDay(DayBase(
-          totalWork: commonWork,
-          restantWork: commonWork,
-          date: date
-        ));
-        emit(OnShowingTodayDay(
-          day: newDay,
-          restantWork: commonWork
-        ));
+        await _manageLoadDayEmptyDBException(date, emit);
       }
     }
+  }
+
+  Future<void> _tryLoadDay(CustomDate date, Emitter<DayState> emit)async{
+    var day = await repository.getDayByDate(date);
+    final activities = _getSortedActivities(day.activities);
+    day = _createDayFromExistent(
+      day,
+      activities: activities
+    );
+    final restantWork = _calculateRestantWork(
+      day.totalWork,
+      day.activities
+    );
+    emit(OnShowingTodayDay(
+      day: day,
+      restantWork: restantWork
+    ));
+  }
+
+  Future<void> _manageLoadDayEmptyDBException(CustomDate date, Emitter<DayState> emit)async{
+    final commonWork = await commonRepository.getCommonWork();
+    final newDay = await repository.createDay(DayBase(
+      totalWork: commonWork,
+      restantWork: commonWork,
+      date: date
+    ));
+    emit(OnShowingTodayDay(
+      day: newDay,
+      restantWork: commonWork
+    ));
   }
 
   List<HabitActivity> _getSortedActivities(List<HabitActivity> activities) =>
@@ -157,6 +166,8 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     emit(OnCreatingActivity(
       day: today,
       activity: activity,
+      //TODO: Implementar data real desde el caso de uso
+      repeatablesActivities: [],
       restantWork: initialState.restantWork,
       canEnd: canEnd
     ));
@@ -172,6 +183,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     emit(OnCreatingActivity(
       day: initialState.day,
       activity: activity,
+      repeatablesActivities: initialState.repeatablesActivities,
       restantWork: initialState.restantWork,
       canEnd: canEnd
     ));
@@ -199,48 +211,66 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         hour: event.initialTime!.hour,
         minute: event.initialTime!.minute
       );
-      final activities = initialState.day.activities;
-      bool timeIsBetweenAnyActivityRange = false;
-      bool newRangeCollides = false;
-      for(int i = 0; i < activities.length && !timeIsBetweenAnyActivityRange; i++){
-        final currentActivity = activities[i];
-        timeIsBetweenAnyActivityRange |= timeRangeCalificator.timeIsBetweenTimeRange(
-          formattedInitialTime,
-          currentActivity.initialTime,
-          currentActivity.minutesDuration
-        );
-        newRangeCollides |= timeRangeCalificator.timeRangesCollide(
-          formattedInitialTime,
-          initialState.activity.minutesDuration,
-          currentActivity.initialTime,
-          currentActivity.minutesDuration
-        );
-      }
-      if(timeIsBetweenAnyActivityRange || newRangeCollides){
-        emit(OnCreatingActivityError(
-          day: initialState.day,
-          activity: initialState.activity,
-          restantWork: initialState.restantWork,
-          canEnd: initialState.canEnd,
-          message: timeIsBetweenAnyActivityRange? 
-            initialTimeIsOnAnotherActivityRangeMessage :
-            currentRangeCollidesWithOtherMessage,
-          type: ErrorType.initTimeCollides
-        ));
+      final timeAdditionRestriction = _defineTimeAdditionRestriction(initialState, formattedInitialTime);
+      if(timeAdditionRestriction.timeIsBetweenAnyActivityRange || timeAdditionRestriction.newRangeCollides){
+        _emitInitialTimeAdditionError(emit, initialState, timeAdditionRestriction);
       }else{
-        final activity = _getActivityCreationFromExistent(
-          initialState.activity,
-          initialTime: formattedInitialTime
-        );
-        final canEnd = activityCompletitionValidator.isCompleted(activity);
-        emit(OnCreatingActivity(
-          day: initialState.day,
-          activity: activity,
-          restantWork: initialState.restantWork,
-          canEnd: canEnd
-        ));
+        _emitInitialTimeAdditionSuccess(initialState, formattedInitialTime, emit);
       }
     }
+  }
+  
+  InitialTimeAdditionRestriction _defineTimeAdditionRestriction(OnCreatingActivity initialState, CustomTime formattedInitialTime){
+    final activities = initialState.day.activities;
+    bool timeIsBetweenAnyActivityRange = false;
+    bool newRangeCollides = false;
+    for(int i = 0; i < activities.length && !timeIsBetweenAnyActivityRange; i++){
+      final currentActivity = activities[i];
+      timeIsBetweenAnyActivityRange |= timeRangeCalificator.timeIsBetweenTimeRange(
+        formattedInitialTime,
+        currentActivity.initialTime,
+        currentActivity.minutesDuration
+      );
+      newRangeCollides |= timeRangeCalificator.timeRangesCollide(
+        formattedInitialTime,
+        initialState.activity.minutesDuration,
+        currentActivity.initialTime,
+        currentActivity.minutesDuration
+      );
+    }
+    return InitialTimeAdditionRestriction(
+      timeIsBetweenAnyActivityRange: timeIsBetweenAnyActivityRange,
+      newRangeCollides: newRangeCollides
+    );
+  }
+
+  void _emitInitialTimeAdditionError(Emitter<DayState> emit, OnCreatingActivity initialState, InitialTimeAdditionRestriction timeAdditionRestriction){
+    emit(OnCreatingActivityError(
+      day: initialState.day,
+      activity: initialState.activity,
+      repeatablesActivities: initialState.repeatablesActivities,
+      restantWork: initialState.restantWork,
+      canEnd: initialState.canEnd,
+      message: timeAdditionRestriction.timeIsBetweenAnyActivityRange? 
+        initialTimeIsOnAnotherActivityRangeMessage :
+        currentRangeCollidesWithOtherMessage,
+      type: ErrorType.initTimeCollides
+    ));
+  }
+
+  void _emitInitialTimeAdditionSuccess(OnCreatingActivity initialState, CustomTime formattedInitialTime, Emitter<DayState> emit){
+    final activity = _getActivityCreationFromExistent(
+      initialState.activity,
+      initialTime: formattedInitialTime
+    );
+    final canEnd = activityCompletitionValidator.isCompleted(activity);
+    emit(OnCreatingActivity(
+      day: initialState.day,
+      activity: activity,
+      repeatablesActivities: initialState.repeatablesActivities,
+      restantWork: initialState.restantWork,
+      canEnd: canEnd
+    ));
   }
 
   void _updateActivityMinutesDuration(Emitter<DayState> emit, UpdateActivityMinutesDuration event){
@@ -255,6 +285,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       emit(OnCreatingActivity(
         day: initialState.day,
         activity: activity,
+        repeatablesActivities: initialState.repeatablesActivities,
         restantWork: initialState.restantWork,
         canEnd: canEnd
       ));
@@ -274,6 +305,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       emit(OnCreatingActivity(
         day: initialState.day,
         activity: activity,
+        repeatablesActivities: initialState.repeatablesActivities,
         restantWork: initialState.restantWork,
         canEnd: canEnd
       ));
@@ -297,6 +329,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         emit(OnCreatingActivityError(
           day: initialState.day,
           activity: activity,
+          repeatablesActivities: initialState.repeatablesActivities,
           restantWork: initialState.restantWork,
           canEnd: initialState.canEnd,
           message: currentRangeCollides?
@@ -311,6 +344,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       emit(OnCreatingActivityError(
         day: initialState.day,
         activity: activity,
+        repeatablesActivities: initialState.repeatablesActivities,
         restantWork: initialState.restantWork,
         canEnd: initialState.canEnd,
         message: exception.message.isNotEmpty? exception.message : unexpectedErrorMessage,

@@ -337,6 +337,8 @@ void _testInitActivityCreation(){
           day: today,
           activity: activity,
           restantWork: restantWorK,
+          //TODO: Implementar data real
+          repeatablesActivities: [],
           canEnd: false
         )
       ];
@@ -466,6 +468,8 @@ void _testUpdateActivityInitialTime(){
       );
       todayBloc.emit(OnCreatingActivity(
         day: currentDay,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         activity: initActivity,
         restantWork: tRestantWork,
         canEnd: false
@@ -537,6 +541,8 @@ void _testUpdateActivityInitialTime(){
             OnCreatingActivity(
               day: currentDay,
               activity: updatedActivity,
+              //TODO: Implementar data real
+              repeatablesActivities: const [],
               restantWork: tRestantWork,
               canEnd: true
             )
@@ -553,6 +559,8 @@ void _testUpdateActivityInitialTime(){
             OnCreatingActivity(
               day: currentDay,
               activity: updatedActivity,
+              //TODO: Implementar data real
+              repeatablesActivities: const [],
               restantWork: tRestantWork,
               canEnd: false
             )
@@ -582,6 +590,8 @@ void _testUpdateActivityInitialTime(){
             day: currentDay,
             activity: initActivity,
             restantWork: tRestantWork,
+            //TODO: Implementar data real
+            repeatablesActivities: const [],
             canEnd: false,
             message: DayBloc.currentRangeCollidesWithOtherMessage,
             type: ErrorType.initTimeCollides
@@ -608,6 +618,8 @@ void _testUpdateActivityInitialTime(){
         OnCreatingActivityError(
           day: currentDay,
           activity: initActivity,
+          //TODO: Implementar data real
+          repeatablesActivities: const [],
           restantWork: tRestantWork,
           canEnd: false,
           message: DayBloc.initialTimeIsOnAnotherActivityRangeMessage,
@@ -633,6 +645,8 @@ void _testUpdateActivityInitialTime(){
     todayBloc.emit(OnCreatingActivity(
       day: currentDay,
       activity: initActivity,
+      //TODO: Implementar data real
+      repeatablesActivities: const [],
       restantWork: tRestantWork,
       canEnd: false
     ));
@@ -702,6 +716,8 @@ void _testUpdateActivityDuration(){
       todayBloc.emit(OnCreatingActivity(
         day: today,
         activity: initActivity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: restantWork,
         canEnd: true
       ));
@@ -739,6 +755,8 @@ void _testUpdateActivityDuration(){
           OnCreatingActivity(
             day: today,
             activity: updatedActivity,
+            //TODO: Implementar data real
+            repeatablesActivities: const [],
             restantWork: restantWork,
             canEnd: false
           )
@@ -754,6 +772,8 @@ void _testUpdateActivityDuration(){
           OnCreatingActivity(
             day: today,
             activity: updatedActivity,
+            //TODO: Implementar data real
+            repeatablesActivities: const [],
             restantWork: restantWork,
             canEnd: true
           )
@@ -777,6 +797,8 @@ void _testUpdateActivityDuration(){
       todayBloc.emit(OnCreatingActivity(
         day: today,
         activity: initActivity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: restantWork,
         canEnd: true
       ));
@@ -811,6 +833,8 @@ void _testUpdateActivityDuration(){
         OnCreatingActivity(
           day: today,
           activity: updatedActivity,
+          //TODO: Implementar data real
+          repeatablesActivities: const [],
           restantWork: restantWork,
           canEnd: false
         )
@@ -826,6 +850,8 @@ void _testUpdateActivityDuration(){
         OnCreatingActivity(
           day: today,
           activity: updatedActivity,
+          //TODO: Implementar data real
+          repeatablesActivities: const [],
           restantWork: restantWork,
           canEnd: true
         )
@@ -895,6 +921,8 @@ void _testCreateActivity(){
       todayBloc.emit(OnCreatingActivity(
         day: initDay,
         activity: activity,
+        //TODO: Implementar data real
+            repeatablesActivities: const [],
         restantWork: initRestantWork,
         canEnd: true
       ));
@@ -1007,6 +1035,8 @@ void _testCreateActivity(){
     todayBloc.emit(OnCreatingActivity(
       day: initDay,
       activity: activity,
+      //TODO: Implementar data real
+      repeatablesActivities: const [],
       restantWork: initRestantWork,
       canEnd: true
     ));
@@ -1014,6 +1044,8 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: initRestantWork,
         canEnd: true,
         message: DayBloc.insufficientRestantWorkMessage,
@@ -1033,6 +1065,8 @@ void _testCreateActivity(){
     todayBloc.emit(OnCreatingActivity(
       day: initDay,
       activity: activity,
+      //TODO: Implementar data real
+      repeatablesActivities: const [],
       restantWork: initRestantWork,
       canEnd: true
     ));
@@ -1040,6 +1074,8 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: initRestantWork,
         canEnd: true,
         message: DayBloc.currentRangeCollidesWithOtherMessage,
@@ -1058,6 +1094,8 @@ void _testCreateActivity(){
     todayBloc.emit(OnCreatingActivity(
       day: initDay,
       activity: activity,
+      //TODO: Implementar data real
+      repeatablesActivities: const [],
       restantWork: initRestantWork,
       canEnd: true
     ));
@@ -1072,6 +1110,8 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: initRestantWork,
         canEnd: true,
         message: message,
@@ -1090,6 +1130,8 @@ void _testCreateActivity(){
     todayBloc.emit(OnCreatingActivity(
       day: initDay,
       activity: activity,
+      //TODO: Implementar data real
+      repeatablesActivities: const [],
       restantWork: initRestantWork,
       canEnd: true
     ));
@@ -1103,6 +1145,8 @@ void _testCreateActivity(){
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
+        //TODO: Implementar data real
+        repeatablesActivities: const [],
         restantWork: initRestantWork,
         canEnd: true,
         message: DayBloc.unexpectedErrorMessage,

@@ -40,4 +40,9 @@ class DayRepositoryImpl implements DayRepository{
     // TODO: implement deleteHabitFromDay
     throw UnimplementedError();
   }
+  
+  @override
+  Future<List<HabitActivity>> getAllRepeatableActivities()async{
+    return await localDataSource.getAllRepeatableActivities();
+  }
 }
