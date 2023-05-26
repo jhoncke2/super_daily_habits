@@ -18,7 +18,7 @@ class DayLoaded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dimens = AppDimens();
-    final blocState = BlocProvider.of<DayBloc>(context).state as OnTodayDay;
+    final blocState = BlocProvider.of<DayBloc>(context).state as OnDay;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -56,7 +56,7 @@ class DayLoaded extends StatelessWidget {
           )
         ),
         Visibility(
-          visible: blocState is OnShowingTodayDay,
+          visible: blocState is OnShowingDay,
           child: DayView(today: today)
         ),
         Visibility(

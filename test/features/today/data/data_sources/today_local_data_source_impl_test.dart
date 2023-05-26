@@ -298,7 +298,8 @@ void _testSetActivityToDay(){
         minute: 20
       ),
       minutesDuration: 30,
-      work: 10
+      work: 10,
+      repeatability: ActivityRepeatability.none
     );
     tJsonActivity = {
       'name': 'act_x',

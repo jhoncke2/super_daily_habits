@@ -25,6 +25,8 @@ import 'package:super_daily_habits/features/today/domain/helpers/activity_comple
     as _i11;
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
     as _i10;
+import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart'
+    as _i14;
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
     as _i12;
 
@@ -218,7 +220,7 @@ class MockCurrentDateGetter extends _i1.Mock implements _i10.CurrentDateGetter {
   }
 
   @override
-  _i3.CustomDate getCurrentDate() => (super.noSuchMethod(
+  _i3.CustomDate getTodayDate() => (super.noSuchMethod(
         Invocation.method(
           #getCurrentDate,
           [],
@@ -293,6 +295,31 @@ class MockTimeRangeCalificator extends _i1.Mock
             duration1,
             initialTime2,
             duration2,
+          ],
+        ),
+        returnValue: false,
+      ) as bool);
+}
+
+/// A class which mocks [DayCalificator].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDayCalificator extends _i1.Mock implements _i14.DayCalificator {
+  MockDayCalificator() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  bool canBeModified(
+    _i2.Day? day,
+    _i3.CustomDate? currentDate,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #canBeModified,
+          [
+            day,
+            currentDate,
           ],
         ),
         returnValue: false,

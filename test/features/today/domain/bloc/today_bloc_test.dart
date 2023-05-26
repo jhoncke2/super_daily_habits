@@ -13,6 +13,7 @@ import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/day_repository.dart';
 import 'today_bloc_test.mocks.dart';
@@ -23,16 +24,19 @@ late MockCommonRepository commonRepository;
 late MockCurrentDateGetter currentDateGetter;
 late MockActivityCompletitionValidator activityCompletitionValidator;
 late MockTimeRangeCalificator timeRangeCalificator;
+late MockDayCalificator dayCalificator;
 
 @GenerateMocks([
   DayRepository,
   CommonRepository,
   CurrentDateGetter,
   ActivityCompletitionValidator,
-  TimeRangeCalificator
+  TimeRangeCalificator,
+  DayCalificator
 ])
 void main(){
   setUp((){
+    dayCalificator = MockDayCalificator();
     timeRangeCalificator = MockTimeRangeCalificator();
     activityCompletitionValidator = MockActivityCompletitionValidator();
     currentDateGetter = MockCurrentDateGetter();
@@ -43,14 +47,18 @@ void main(){
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
       timeRangeCalificator: timeRangeCalificator,
-      commonRepository: commonRepository
+      commonRepository: commonRepository,
+      dayCalificator: dayCalificator
     );
   });
 
   group('load day', _testLoadDay);
   group('init activity creation', _testInitActivityCreation);
+  group('choose repeatable activity', _testChooseRepeatableActivity);
   group('update activity initial time', _testUpdateActivityInitialTime);
   group('update activity duration', _testUpdateActivityDuration);
+  test('change save activity to repeat', _testChangeSaveActivityToRepeat);
+  //TODO: Actualizar con repeatable features
   group('create activity', _testCreateActivity);
 }
 
@@ -152,26 +160,48 @@ void _testLoadDay(){
 
     group('Cuando el date del evento es null', (){
       setUp((){
-        when(currentDateGetter.getCurrentDate())
+        when(currentDateGetter.getTodayDate())
           .thenReturn(date);
       });
 
       test('Debe llamar los métodos esperados', ()async{
+        when(dayCalificator.canBeModified(any, any))
+            .thenReturn(true);
         todayBloc.add(const LoadDay());
-        await untilCalled(currentDateGetter.getCurrentDate());
-        verify(currentDateGetter.getCurrentDate());
+        await untilCalled(currentDateGetter.getTodayDate());
+        verify(currentDateGetter.getTodayDate());
         await untilCalled(todayRepository.getDayByDate(any));
         verify(todayRepository.getDayByDate(date));
+        await(untilCalled(dayCalificator.canBeModified(any, any)));
+        verify(dayCalificator.canBeModified(sortedDay, date));
         verifyNever(commonRepository.getCommonWork());
         verifyNever(todayRepository.createDay(any));
       });
       test('''Debe emitir los siguientes estados en el orden esperado
-      con un restantWork de 5 y los activities ordenados''', ()async{
+      con un restantWork de 5 y los activities ordenados cuando dayCalificator retorna true''', ()async{
+        when(dayCalificator.canBeModified(any, any))
+            .thenReturn(true);
         final states = [
           OnLoadingTodayDay(),
-          OnShowingTodayDay(
+          OnShowingDay(
             day: sortedDay,
-            restantWork: 2
+            restantWork: 2,
+            canBeModified: true
+          )
+        ];
+        expectLater(todayBloc.stream, emitsInOrder(states));
+        todayBloc.add(const LoadDay());
+      });
+      test('''Debe emitir los siguientes estados en el orden esperado
+      con un restantWork de 5 y los activities ordenados cuando dayCalificator retorna false''', ()async{
+        when(dayCalificator.canBeModified(any, any))
+            .thenReturn(false);
+        final states = [
+          OnLoadingTodayDay(),
+          OnShowingDay(
+            day: sortedDay,
+            restantWork: 2,
+            canBeModified: false
           )
         ];
         expectLater(todayBloc.stream, emitsInOrder(states));
@@ -182,30 +212,47 @@ void _testLoadDay(){
 
     group('Cuando el date del evento <no> es null', (){
       late DateTime eventDate;
+      late CustomDate todayDate;
       setUp((){
         eventDate = DateTime(
           date.year,
           date.month,
           date.day
         );
+        todayDate = const CustomDate(
+          year: 2023,
+          month: 02,
+          day: 05,
+          weekDay: 4
+        );
+        when(currentDateGetter.getTodayDate())
+            .thenReturn(todayDate);
       });
 
       test('Debe llamar los métodos esperados cuando el date del evento <no> es null', ()async{
+        when(dayCalificator.canBeModified(any, any))
+            .thenReturn(true);
         todayBloc.add(LoadDay(date: eventDate));
         await untilCalled(todayRepository.getDayByDate(any));
         verify(todayRepository.getDayByDate(date));
-        verifyNever(currentDateGetter.getCurrentDate());
+        await(untilCalled(dayCalificator.canBeModified(any, any)));
+        verify(dayCalificator.canBeModified(sortedDay, todayDate));
+        await untilCalled(currentDateGetter.getTodayDate());
+        verify(currentDateGetter.getTodayDate());
         verifyNever(commonRepository.getCommonWork());
         verifyNever(todayRepository.createDay(any));
       });
 
       test('''Debe emitir los siguientes estados en el orden esperado
-      con un restantWork de 5 y los activities ordenados''', ()async{
+      con un restantWork de 5 y los activities ordenados y dayCalificator retorna <true>''', ()async{
+        when(dayCalificator.canBeModified(any, any))
+            .thenReturn(true);
         final states = [
           OnLoadingTodayDay(),
-          OnShowingTodayDay(
+          OnShowingDay(
             day: sortedDay,
-            restantWork: 2
+            restantWork: 2,
+            canBeModified: true
           )
         ];
         expectLater(todayBloc.stream, emitsInOrder(states));
@@ -214,7 +261,7 @@ void _testLoadDay(){
     });
   });
 
-  group('Cuando el repository retorna DBException.empty con current day', (){
+  group('Cuando el repository retorna DBException.empty con today day', (){
     late DayBase newDay;
     late int commonWork;
     late Day createdDay;
@@ -240,28 +287,35 @@ void _testLoadDay(){
       );
       when(todayRepository.createDay(any))
           .thenAnswer((_) async => createdDay);
-      when(currentDateGetter.getCurrentDate())
+      when(currentDateGetter.getTodayDate())
           .thenReturn(date);
     });
 
     test('Debe lanzar los siguientes métodos', ()async{
+      when(dayCalificator.canBeModified(any, any))
+            .thenReturn(true);
       todayBloc.add(const LoadDay());
-      await untilCalled(currentDateGetter.getCurrentDate());
-      verify(currentDateGetter.getCurrentDate());
       await untilCalled(todayRepository.getDayByDate(any));
       verify(todayRepository.getDayByDate(date));
       await(commonRepository.getCommonWork());
       verify(commonRepository.getCommonWork());
       await untilCalled(todayRepository.createDay(any));
       verify(todayRepository.createDay(newDay));
+      await untilCalled(currentDateGetter.getTodayDate());
+      verify(currentDateGetter.getTodayDate()).called(2);
+      await(untilCalled(dayCalificator.canBeModified(any, any)));
+      verify(dayCalificator.canBeModified(createdDay, date));
     });
 
-    test('Debe emitir los siguientes estados en el orden esperado', ()async{
+    test('Debe emitir los siguientes estados en el orden esperado y dayCalificator retorna false', ()async{
+      when(dayCalificator.canBeModified(any, any))
+            .thenReturn(false);
       final states = [
         OnLoadingTodayDay(),
-        OnShowingTodayDay(
+        OnShowingDay(
           day: createdDay,
-          restantWork: commonWork
+          restantWork: commonWork,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -276,6 +330,7 @@ void _testInitActivityCreation(){
   
   group('Cuando aún hay espacio en el tiempo del día para llenar', (){
     late HabitActivityCreation activity;
+    late List<HabitActivity> repeatableActivities;
     setUp((){
       restantWorK = 20;
       today = Day(
@@ -312,11 +367,37 @@ void _testInitActivityCreation(){
         name: '',
         initialTime: null,
         minutesDuration: 0,
-        work: 0
+        work: 0,
+        repeatability: ActivityRepeatability.none
       );
-      todayBloc.emit(OnShowingTodayDay(
+      repeatableActivities = const [
+        HabitActivity(
+          id: 0,
+          name: 'act_0',
+          minutesDuration: 150,
+          work: 10,
+          initialTime: CustomTime(
+            hour: 5,
+            minute: 30
+          )
+        ),
+        HabitActivity(
+          id: 1,
+          name: 'act_1',
+          minutesDuration: 350,
+          work: 50,
+          initialTime: CustomTime(
+            hour: 10,
+            minute: 10
+          )
+        )
+      ];
+      when(todayRepository.getAllRepeatableActivities())
+          .thenAnswer((_) async => repeatableActivities);
+      todayBloc.emit(OnShowingDay(
         day: today,
-        restantWork: restantWorK
+        restantWork: restantWorK,
+        canBeModified: false
       ));
     });
 
@@ -338,8 +419,10 @@ void _testInitActivityCreation(){
           activity: activity,
           restantWork: restantWorK,
           //TODO: Implementar data real
-          repeatablesActivities: [],
-          canEnd: false
+          repeatableActivities: repeatableActivities,
+          chosenRepeatableActivity: null,
+          canEnd: false,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -380,9 +463,10 @@ void _testInitActivityCreation(){
         totalWork: 50,
         restantWork: 30
       );
-      todayBloc.emit(OnShowingTodayDay(
+      todayBloc.emit(OnShowingDay(
         day: today,
-        restantWork: restantWorK
+        restantWork: restantWorK,
+        canBeModified: true
       ));
     });
 
@@ -391,17 +475,30 @@ void _testInitActivityCreation(){
       when(activityCompletitionValidator.isCompleted(any))
           .thenReturn(false);
       final states = [
-        OnShowingTodayDayError(
+        OnShowingDayError(
           day: today,
           restantWork: restantWorK,
           message: DayBloc.dayTimeFilledMessage,
-          type: ErrorType.general
+          type: ErrorType.general,
+          canBeModified: true
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
       todayBloc.add(InitActivityCreation());
     });
   });
+}
+
+void _testChooseRepeatableActivity(){
+  /**
+   * TODO: VErificar que no colisione con su:
+   *      * initHour
+   *      * duration
+   *      * work
+   */
+  
+  late Day day;
+  late List<HabitActivity> repeatableActivities; 
 }
 
 void _testUpdateActivityInitialTime(){
@@ -464,15 +561,18 @@ void _testUpdateActivityInitialTime(){
         name: 'act_x',
         initialTime: null,
         minutesDuration: 10,
-        work: 1
+        work: 1,
+        repeatability: ActivityRepeatability.none
       );
       todayBloc.emit(OnCreatingActivity(
         day: currentDay,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         activity: initActivity,
         restantWork: tRestantWork,
-        canEnd: false
+        chosenRepeatableActivity: null,
+        canEnd: false,
+        canBeModified: false
       ));
     });
 
@@ -489,7 +589,8 @@ void _testUpdateActivityInitialTime(){
             name: 'act_x',
             initialTime: formattedTime,
             minutesDuration: 10,
-            work: 1
+            work: 1,
+            repeatability: ActivityRepeatability.none
           );
           when(timeRangeCalificator.timeRangesCollide(
             any,
@@ -542,9 +643,11 @@ void _testUpdateActivityInitialTime(){
               day: currentDay,
               activity: updatedActivity,
               //TODO: Implementar data real
-              repeatablesActivities: const [],
+              repeatableActivities: const [],
               restantWork: tRestantWork,
-              canEnd: true
+              chosenRepeatableActivity: null,
+              canEnd: true,
+              canBeModified: false
             )
           ];
           expectLater(todayBloc.stream, emitsInOrder(states));
@@ -560,9 +663,11 @@ void _testUpdateActivityInitialTime(){
               day: currentDay,
               activity: updatedActivity,
               //TODO: Implementar data real
-              repeatablesActivities: const [],
+              repeatableActivities: const [],
               restantWork: tRestantWork,
-              canEnd: false
+              chosenRepeatableActivity: null,
+              canEnd: false,
+              canBeModified: false
             )
           ];
           expectLater(todayBloc.stream, emitsInOrder(states));
@@ -576,7 +681,8 @@ void _testUpdateActivityInitialTime(){
           name: 'act_x',
           initialTime: formattedTime,
           minutesDuration: 10,
-          work: 1
+          work: 1,
+          repeatability: ActivityRepeatability.none
         );
         final collidesResponses = [false, true];
         when(timeRangeCalificator.timeRangesCollide(
@@ -591,10 +697,12 @@ void _testUpdateActivityInitialTime(){
             activity: initActivity,
             restantWork: tRestantWork,
             //TODO: Implementar data real
-            repeatablesActivities: const [],
+            repeatableActivities: const [],
+            chosenRepeatableActivity: null,
             canEnd: false,
             message: DayBloc.currentRangeCollidesWithOtherMessage,
-            type: ErrorType.initTimeCollides
+            type: ErrorType.initTimeCollides,
+            canBeModified: false
           )
         ];
         expectLater(todayBloc.stream, emitsInOrder(states));
@@ -619,11 +727,13 @@ void _testUpdateActivityInitialTime(){
           day: currentDay,
           activity: initActivity,
           //TODO: Implementar data real
-          repeatablesActivities: const [],
+          repeatableActivities: const [],
           restantWork: tRestantWork,
+          chosenRepeatableActivity: null,
           canEnd: false,
           message: DayBloc.initialTimeIsOnAnotherActivityRangeMessage,
-          type: ErrorType.initTimeCollides
+          type: ErrorType.initTimeCollides,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -646,9 +756,11 @@ void _testUpdateActivityInitialTime(){
       day: currentDay,
       activity: initActivity,
       //TODO: Implementar data real
-      repeatablesActivities: const [],
+      repeatableActivities: const [],
+      chosenRepeatableActivity: null,
       restantWork: tRestantWork,
-      canEnd: false
+      canEnd: false,
+      canBeModified: false
     ));
     time = null;
     expectLater(todayBloc.stream, emitsInOrder([]));
@@ -711,15 +823,18 @@ void _testUpdateActivityDuration(){
           minute: 2
         ),
         minutesDuration: 0,
-        work: 10
+        work: 10,
+        repeatability: ActivityRepeatability.none
       );
       todayBloc.emit(OnCreatingActivity(
         day: today,
         activity: initActivity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: restantWork,
-        canEnd: true
+        chosenRepeatableActivity: null,
+        canEnd: true,
+        canBeModified: true
       ));
       newDuration = '10';
       newDurationFormatted = 10;
@@ -730,7 +845,8 @@ void _testUpdateActivityDuration(){
           minute: 2
         ),
         minutesDuration: newDurationFormatted,
-        work: 10
+        work: 10,
+        repeatability: ActivityRepeatability.none
       );
     });
 
@@ -756,9 +872,11 @@ void _testUpdateActivityDuration(){
             day: today,
             activity: updatedActivity,
             //TODO: Implementar data real
-            repeatablesActivities: const [],
+            repeatableActivities: const [],
             restantWork: restantWork,
-            canEnd: false
+            chosenRepeatableActivity: null,
+            canEnd: false,
+            canBeModified: true
           )
         ];
         expectLater(todayBloc.stream, emitsInOrder(states));
@@ -773,9 +891,11 @@ void _testUpdateActivityDuration(){
             day: today,
             activity: updatedActivity,
             //TODO: Implementar data real
-            repeatablesActivities: const [],
+            repeatableActivities: const [],
             restantWork: restantWork,
-            canEnd: true
+            chosenRepeatableActivity: null,
+            canEnd: true,
+            canBeModified: true
           )
         ];
         expectLater(todayBloc.stream, emitsInOrder(states));
@@ -792,15 +912,18 @@ void _testUpdateActivityDuration(){
         name: 'ac_x',
         initialTime: null,
         minutesDuration: 0,
-        work: 10
+        work: 10,
+        repeatability: ActivityRepeatability.none
       );
       todayBloc.emit(OnCreatingActivity(
         day: today,
         activity: initActivity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: restantWork,
-        canEnd: true
+        chosenRepeatableActivity: null,
+        canEnd: true,
+        canBeModified: false
       ));
       newDuration = '1';
       newDurationFormatted = 1;
@@ -808,6 +931,7 @@ void _testUpdateActivityDuration(){
         name: 'ac_x',
         initialTime: null,
         minutesDuration: newDurationFormatted,
+        repeatability: ActivityRepeatability.none,
         work: 10
       );
     });
@@ -834,9 +958,11 @@ void _testUpdateActivityDuration(){
           day: today,
           activity: updatedActivity,
           //TODO: Implementar data real
-          repeatablesActivities: const [],
+          repeatableActivities: const [],
           restantWork: restantWork,
-          canEnd: false
+          chosenRepeatableActivity: null,
+          canEnd: false,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -851,15 +977,21 @@ void _testUpdateActivityDuration(){
           day: today,
           activity: updatedActivity,
           //TODO: Implementar data real
-          repeatablesActivities: const [],
+          repeatableActivities: const [],
           restantWork: restantWork,
-          canEnd: true
+          chosenRepeatableActivity: null,
+          canEnd: true,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
       todayBloc.add(UpdateActivityMinutesDuration(newDuration));
     });
   });
+}
+
+void _testChangeSaveActivityToRepeat(){
+  
 }
 
 void _testCreateActivity(){
@@ -909,7 +1041,8 @@ void _testCreateActivity(){
         minute: 10
       ),
       minutesDuration: 10,
-      work: 10
+      work: 10,
+      repeatability: ActivityRepeatability.none
     );
   });
 
@@ -922,9 +1055,22 @@ void _testCreateActivity(){
         day: initDay,
         activity: activity,
         //TODO: Implementar data real
-            repeatablesActivities: const [],
+        repeatableActivities: const [
+          HabitActivity(
+            id: 1000,
+            name: 'ac_1000', 
+            minutesDuration: 10, 
+            work: 8, 
+            initialTime: CustomTime(
+              hour: 11,
+              minute: 20
+            )
+          )
+        ],
         restantWork: initRestantWork,
-        canEnd: true
+        chosenRepeatableActivity: null,
+        canEnd: true,
+        canBeModified: false
       ));
       updatedRestantWork = 9;
       updatedDay = Day(
@@ -1017,9 +1163,10 @@ void _testCreateActivity(){
     con un restant work de 9''', ()async{
       final states = [
         OnLoadingTodayDay(),
-        OnShowingTodayDay(
+        OnShowingDay(
           day: tSortedUpdatedDay,
-          restantWork: 9
+          restantWork: 9,
+          canBeModified: false
         )
       ];
       expectLater(todayBloc.stream, emitsInOrder(states));
@@ -1036,20 +1183,24 @@ void _testCreateActivity(){
       day: initDay,
       activity: activity,
       //TODO: Implementar data real
-      repeatablesActivities: const [],
+      repeatableActivities: const [],
       restantWork: initRestantWork,
-      canEnd: true
+      chosenRepeatableActivity: null,
+      canEnd: true,
+      canBeModified: true
     ));
     final states = [
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: initRestantWork,
+        chosenRepeatableActivity: null,
         canEnd: true,
         message: DayBloc.insufficientRestantWorkMessage,
-        type: ErrorType.notEnoughWork
+        type: ErrorType.notEnoughWork,
+        canBeModified: true
       )
     ];
     expectLater(todayBloc.stream, emitsInOrder(states));
@@ -1066,20 +1217,24 @@ void _testCreateActivity(){
       day: initDay,
       activity: activity,
       //TODO: Implementar data real
-      repeatablesActivities: const [],
+      repeatableActivities: const [],
       restantWork: initRestantWork,
-      canEnd: true
+      chosenRepeatableActivity: null,
+      canEnd: true,
+      canBeModified: false
     ));
     final states = [
       OnCreatingActivityError(
         day: initDay,
         activity: activity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: initRestantWork,
+        chosenRepeatableActivity: null,
         canEnd: true,
         message: DayBloc.currentRangeCollidesWithOtherMessage,
-        type: ErrorType.durationCollides
+        type: ErrorType.durationCollides,
+        canBeModified: false
       )
     ];
     expectLater(todayBloc.stream, emitsInOrder(states));
@@ -1095,9 +1250,11 @@ void _testCreateActivity(){
       day: initDay,
       activity: activity,
       //TODO: Implementar data real
-      repeatablesActivities: const [],
+      repeatableActivities: const [],
       restantWork: initRestantWork,
-      canEnd: true
+      chosenRepeatableActivity: null,
+      canEnd: true,
+      canBeModified: true
     ));
     const message = 'error_message';
     when(todayRepository.setActivityToDay(any, any, any))
@@ -1111,11 +1268,13 @@ void _testCreateActivity(){
         day: initDay,
         activity: activity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: initRestantWork,
+        chosenRepeatableActivity: null,
         canEnd: true,
         message: message,
-        type: ErrorType.general
+        type: ErrorType.general,
+        canBeModified: true
       )
     ];
     expectLater(todayBloc.stream, emitsInOrder(states));
@@ -1131,9 +1290,11 @@ void _testCreateActivity(){
       day: initDay,
       activity: activity,
       //TODO: Implementar data real
-      repeatablesActivities: const [],
+      repeatableActivities: const [],
+      chosenRepeatableActivity: null,
       restantWork: initRestantWork,
-      canEnd: true
+      canEnd: true,
+      canBeModified: false
     ));
     when(todayRepository.setActivityToDay(any, any, any))
         .thenThrow(const DBException(
@@ -1146,11 +1307,13 @@ void _testCreateActivity(){
         day: initDay,
         activity: activity,
         //TODO: Implementar data real
-        repeatablesActivities: const [],
+        repeatableActivities: const [],
         restantWork: initRestantWork,
+        chosenRepeatableActivity: null,
         canEnd: true,
         message: DayBloc.unexpectedErrorMessage,
-        type: ErrorType.general
+        type: ErrorType.general,
+        canBeModified: false
       )
     ];
     expectLater(todayBloc.stream, emitsInOrder(states));

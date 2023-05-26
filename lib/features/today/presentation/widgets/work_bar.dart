@@ -7,7 +7,7 @@ class WorkBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blocState = BlocProvider.of<DayBloc>(context).state as OnTodayDay;
+    final blocState = BlocProvider.of<DayBloc>(context).state as OnDay;
     final dimens = AppDimens();
     return Container(
       width: dimens.getWidthPercentage(1),

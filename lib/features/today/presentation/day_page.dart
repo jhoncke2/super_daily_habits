@@ -25,7 +25,7 @@ class DayPage extends StatelessWidget {
                   builder: (blocContext, blocState) {
                     _managePostFrameCallbacks(blocContext, blocState, date);
                     return (
-                      (blocState is OnTodayDay)?
+                      (blocState is OnDay)?
                         DayLoaded(
                           today: blocState.day,
                         ):

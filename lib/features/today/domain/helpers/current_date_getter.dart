@@ -1,12 +1,12 @@
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart';
 
 abstract class CurrentDateGetter{
-  CustomDate getCurrentDate();
+  CustomDate getTodayDate();
 }
 
 class CurrentDateGetterImpl implements CurrentDateGetter{
   @override
-  CustomDate getCurrentDate() => CustomDate.fromDateTime(
+  CustomDate getTodayDate() => CustomDate.fromDateTime(
     DateTime.now()
   );
 }

@@ -25,35 +25,40 @@ class OnLoadingTodayDay extends DayState {
 
 }
 
-abstract class OnTodayDay extends DayState{
+abstract class OnDay extends DayState{
   final Day day;
   final int restantWork;
-  const OnTodayDay({
+  final bool canBeModified;
+  const OnDay({
     required this.day,
-    required this.restantWork
+    required this.restantWork,
+    required this.canBeModified
   });
   @override
   List<Object?> get props => [
     day,
-    restantWork
+    restantWork,
+    canBeModified
   ];
 }
 
-class OnShowingTodayDay extends OnTodayDay{
-  const OnShowingTodayDay({
+class OnShowingDay extends OnDay{
+  const OnShowingDay({
     required super.day,
-    required super.restantWork
+    required super.restantWork,
+    required super.canBeModified
   });
 }
 
-class OnShowingTodayDayError extends OnShowingTodayDay implements OnError{
+class OnShowingDayError extends OnShowingDay implements OnError{
   @override
   final String message;
   @override
   final ErrorType type;
-  const OnShowingTodayDayError({
+  const OnShowingDayError({
     required super.day,
     required super.restantWork,
+    required super.canBeModified,
     required this.message,
     required this.type
   });
@@ -65,21 +70,25 @@ class OnShowingTodayDayError extends OnShowingTodayDay implements OnError{
   ];
 }
 
-class OnCreatingActivity extends OnTodayDay{
+class OnCreatingActivity extends OnDay{
   final HabitActivityCreation activity;
-  final List<HabitActivity> repeatablesActivities;
+  final List<HabitActivity> repeatableActivities;
+  final HabitActivity? chosenRepeatableActivity;
   final bool canEnd;
   const OnCreatingActivity({
     required super.day,
     required super.restantWork,
+    required super.canBeModified,
     required this.activity,
-    required this.repeatablesActivities,
+    required this.repeatableActivities,
+    required this.chosenRepeatableActivity,
     required this.canEnd
   });
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     activity,
-    repeatablesActivities,
+    repeatableActivities,
+    chosenRepeatableActivity,
     canEnd
   ];
 }
@@ -93,13 +102,15 @@ class OnCreatingActivityError extends OnCreatingActivity implements OnError{
     required super.day,
     required super.activity,
     required super.restantWork,
-    required super.repeatablesActivities,
+    required super.repeatableActivities,
+    required super.chosenRepeatableActivity,
+    required super.canBeModified,
     required super.canEnd,
     required this.message,
     required this.type
   });
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     ...super.props,
     message,
     type
