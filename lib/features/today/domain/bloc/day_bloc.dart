@@ -11,6 +11,7 @@ import 'package:super_daily_habits/features/today/domain/entities/activity/habit
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/entities/initial_time_addition_restriction.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/activity_text_controllers_generator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -27,6 +28,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
   static const maxDayMinutes = 1440;
   final DayRepository repository;
   final CommonRepository commonRepository;
+  final ActivityTextControllersGenerator activityTextControllersGenerator;
   final CurrentDateGetter currentDateGetter;
   final ActivityCompletitionValidator activityCompletitionValidator;
   final TimeRangeCalificator timeRangeCalificator;
@@ -34,6 +36,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
   DayBloc({
     required this.repository,
     required this.commonRepository,
+    required this.activityTextControllersGenerator,
     required this.currentDateGetter,
     required this.activityCompletitionValidator,
     required this.timeRangeCalificator,
@@ -44,6 +47,8 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         await _loadDay(emit, event);
       }else if(event is InitActivityCreation){
         await _initActivityCreation(emit);
+      }else if(event is ChooseRepeatableActivity){
+        _chooseRepeatableActivity(emit, event);
       }else if(event is UpdateActivityName){
         _updateActivityName(emit, event);
       }else if(event is UpdateActivityInitialTime){
@@ -84,15 +89,11 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       day,
       activities: activities
     );
-    final restantWork = _calculateRestantWork(
-      day.totalWork,
-      day.activities
-    );
     final todayDate = currentDateGetter.getTodayDate();
     final canBeModified = dayCalificator.canBeModified(day, todayDate);
     emit(OnShowingDay(
       day: day,
-      restantWork: restantWork,
+      restantWork: day.restantWork,
       canBeModified: canBeModified
     ));
   }
@@ -137,14 +138,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     restantWork: day.restantWork
   );
 
-  int _calculateRestantWork(int totalWork, List<HabitActivity> activities){
-    final usedWork = activities.fold<int>(
-      0,
-      (previousValue, activity) => previousValue + activity.work
-    );
-    return totalWork - usedWork;
-  }
-
   Future<void> _initActivityCreation(Emitter<DayState> emit)async{
     final initialState = state as OnDay;
     final totalDuration = initialState.day.activities.fold<int>(
@@ -174,6 +167,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       work: 0,
       repeatability: ActivityRepeatability.none
     );
+    activityTextControllersGenerator.generate();
     final canEnd = activityCompletitionValidator.isCompleted(activity);
     emit(OnCreatingActivity(
       day: today,
@@ -181,6 +175,33 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       repeatableActivities: repeatableActivities,
       restantWork: initialState.restantWork,
       chosenRepeatableActivity: null,
+      activityControllersContainer: activityTextControllersGenerator,
+      canEnd: canEnd,
+      canBeModified: initialState.canBeModified,
+    ));
+  }
+
+  void _chooseRepeatableActivity(Emitter<DayState> emit, ChooseRepeatableActivity event){
+    final initialState = (state as OnCreatingActivity);
+    final eventActivity = event.activity!;
+    final newActivity = HabitActivityCreation(
+      name: eventActivity.name,
+      minutesDuration: eventActivity.minutesDuration,
+      work: eventActivity.work,
+      initialTime: eventActivity.initialTime,
+      repeatability: ActivityRepeatability.repeated
+    );
+    final canEnd = activityCompletitionValidator.isCompleted(newActivity);
+    activityTextControllersGenerator.updateNameController(eventActivity.name);
+    activityTextControllersGenerator.updateMinutesDurationController('${eventActivity.minutesDuration}');
+    activityTextControllersGenerator.updateWorkController('${eventActivity.work}');
+    emit(OnCreatingActivity(
+      day: initialState.day,
+      activity: newActivity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      chosenRepeatableActivity: event.activity,
+      activityControllersContainer: initialState.activityControllersContainer,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified
     ));
@@ -199,6 +220,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
       chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+      activityControllersContainer: initialState.activityControllersContainer,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified
     ));
@@ -268,6 +290,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
       chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+      activityControllersContainer: initialState.activityControllersContainer,
       canEnd: initialState.canEnd,
       message: timeAdditionRestriction.timeIsBetweenAnyActivityRange? 
         initialTimeIsOnAnotherActivityRangeMessage :
@@ -289,6 +312,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
       chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+      activityControllersContainer: initialState.activityControllersContainer,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified
     ));
@@ -309,6 +333,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         repeatableActivities: initialState.repeatableActivities,
         restantWork: initialState.restantWork,
         chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+        activityControllersContainer: initialState.activityControllersContainer,
         canEnd: canEnd,
         canBeModified: initialState.canBeModified
       ));
@@ -331,6 +356,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         repeatableActivities: initialState.repeatableActivities,
         restantWork: initialState.restantWork,
         chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+        activityControllersContainer: initialState.activityControllersContainer,
         canEnd: canEnd,
         canBeModified: initialState.canBeModified
       ));
@@ -381,6 +407,7 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
       chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+      activityControllersContainer: initialState.activityControllersContainer,
       canEnd: initialState.canEnd,
       message: errorMessage,
       type: errorType,

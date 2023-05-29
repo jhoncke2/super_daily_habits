@@ -12,6 +12,7 @@ import 'package:super_daily_habits/features/today/domain/entities/custom_time.da
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/activity_text_controllers_generator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -21,6 +22,7 @@ import 'today_bloc_test.mocks.dart';
 late DayBloc todayBloc;
 late MockDayRepository todayRepository;
 late MockCommonRepository commonRepository;
+late MockActivityTextControllersGenerator activityTextControllersGenerator;
 late MockCurrentDateGetter currentDateGetter;
 late MockActivityCompletitionValidator activityCompletitionValidator;
 late MockTimeRangeCalificator timeRangeCalificator;
@@ -29,10 +31,12 @@ late MockDayCalificator dayCalificator;
 @GenerateMocks([
   DayRepository,
   CommonRepository,
+  ActivityTextControllersGenerator,
   CurrentDateGetter,
   ActivityCompletitionValidator,
   TimeRangeCalificator,
-  DayCalificator
+  DayCalificator,
+  TextEditingController
 ])
 void main(){
   setUp((){
@@ -40,16 +44,26 @@ void main(){
     timeRangeCalificator = MockTimeRangeCalificator();
     activityCompletitionValidator = MockActivityCompletitionValidator();
     currentDateGetter = MockCurrentDateGetter();
+    activityTextControllersGenerator = MockActivityTextControllersGenerator();
     commonRepository = MockCommonRepository();
     todayRepository = MockDayRepository();
     todayBloc = DayBloc(
       repository: todayRepository,
+      commonRepository: commonRepository,
+      activityTextControllersGenerator: activityTextControllersGenerator,
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
       timeRangeCalificator: timeRangeCalificator,
-      commonRepository: commonRepository,
       dayCalificator: dayCalificator
     );
+    when(activityTextControllersGenerator.isEmpty)
+        .thenReturn(false);
+    when(activityTextControllersGenerator.updateNameController(any))
+        .thenReturn(null);
+    when(activityTextControllersGenerator.updateMinutesDurationController(any))
+        .thenReturn(null);
+    when(activityTextControllersGenerator.updateWorkController(any))
+        .thenReturn(null);
   });
 
   group('load day', _testLoadDay);
@@ -57,7 +71,7 @@ void main(){
   group('choose repeatable activity', _testChooseRepeatableActivity);
   group('update activity initial time', _testUpdateActivityInitialTime);
   group('update activity duration', _testUpdateActivityDuration);
-  test('change save activity to repeat', _testChangeSaveActivityToRepeat);
+  group('change save activity to repeat', _testChangeSaveActivityToRepeat);
   //TODO: Actualizar con repeatable features
   group('create activity', _testCreateActivity);
 }
@@ -185,7 +199,7 @@ void _testLoadDay(){
           OnLoadingTodayDay(),
           OnShowingDay(
             day: sortedDay,
-            restantWork: 2,
+            restantWork: sortedDay.restantWork,
             canBeModified: true
           )
         ];
@@ -200,7 +214,7 @@ void _testLoadDay(){
           OnLoadingTodayDay(),
           OnShowingDay(
             day: sortedDay,
-            restantWork: 2,
+            restantWork: sortedDay.restantWork,
             canBeModified: false
           )
         ];
@@ -251,7 +265,7 @@ void _testLoadDay(){
           OnLoadingTodayDay(),
           OnShowingDay(
             day: sortedDay,
-            restantWork: 2,
+            restantWork: sortedDay.restantWork,
             canBeModified: true
           )
         ];
@@ -399,12 +413,16 @@ void _testInitActivityCreation(){
         restantWork: restantWorK,
         canBeModified: false
       ));
+      when(activityTextControllersGenerator.generate())
+        .thenReturn(null);
     });
 
     test('Debe llamar los métodos esperados', ()async{
       when(activityCompletitionValidator.isCompleted(any))
           .thenReturn(false);
       todayBloc.add(InitActivityCreation());
+      await untilCalled(activityTextControllersGenerator.generate());
+      verify(activityTextControllersGenerator.generate());
       await untilCalled(activityCompletitionValidator.isCompleted(any));
       verify(activityCompletitionValidator.isCompleted(activity));
     });
@@ -421,6 +439,7 @@ void _testInitActivityCreation(){
           //TODO: Implementar data real
           repeatableActivities: repeatableActivities,
           chosenRepeatableActivity: null,
+          activityControllersContainer: activityTextControllersGenerator,
           canEnd: false,
           canBeModified: false
         )
@@ -496,9 +515,137 @@ void _testChooseRepeatableActivity(){
    *      * duration
    *      * work
    */
-  
+
+  late List<HabitActivity> dayActivities;
   late Day day;
-  late List<HabitActivity> repeatableActivities; 
+  late List<HabitActivity> repeatableActivities;
+  late HabitActivity? chosenRepeatable;
+  late HabitActivityCreation initActivity;
+  late HabitActivityCreation updatedActivity;
+  setUp((){
+    dayActivities = const [
+      HabitActivity(
+        id: 0,
+        name: 'ac_0',
+        minutesDuration: 50,
+        work: 10,
+        initialTime: CustomTime(
+          hour: 10,
+          minute: 15
+        )
+      )
+    ];
+    day = Day(
+      id: 100,
+      date: CustomDate.fromDateTime(
+        DateTime.now()
+      ),
+      activities: dayActivities,
+      totalWork: 50,
+      restantWork: 40
+    );
+    repeatableActivities = const [
+      HabitActivity(
+        id: 100,
+        name: 'ac_100',
+        minutesDuration: 500,
+        work: 20,
+        initialTime: CustomTime(
+          hour: 5,
+          minute: 10
+        )
+      ),
+      HabitActivity(
+        id: 101,
+        name: 'ac_101',
+        minutesDuration: 10,
+        work: 5,
+        initialTime: CustomTime(
+          hour: 12,
+          minute: 10
+        )
+      )
+    ];
+    initActivity = const HabitActivityCreation(
+      name: 'ac_x',
+      minutesDuration: 20,
+      work: 50,
+      initialTime: null,
+      repeatability: ActivityRepeatability.none
+    ); 
+    todayBloc.emit(OnCreatingActivity(
+      day: day,
+      repeatableActivities: repeatableActivities,
+      activity: initActivity,
+      restantWork: day.restantWork,
+      chosenRepeatableActivity: null,
+      activityControllersContainer: activityTextControllersGenerator,
+      canEnd: false,
+      canBeModified: false
+    ));
+  });
+  
+  group('Cuando el activity seleccionado no es null', (){
+    setUp((){
+      chosenRepeatable = repeatableActivities[0];
+    });
+
+    group('Cuando el día tiene suficiente restantWork', (){
+      setUp((){
+        when(dayCalificator.hasEnoughRestantWork(any, any))
+            .thenReturn(true);
+        when(activityCompletitionValidator.isCompleted(any))
+              .thenReturn(true);
+      });
+
+      group('Cuando ni el tiempo ni el rango de tiempo colisionan', (){
+        setUp((){
+          updatedActivity = HabitActivityCreation(
+            name: chosenRepeatable!.name,
+            minutesDuration: chosenRepeatable!.minutesDuration,
+            work: chosenRepeatable!.work,
+            initialTime: chosenRepeatable!.initialTime,
+            repeatability: ActivityRepeatability.repeated
+          );
+          when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
+            .thenReturn(false);
+          when(timeRangeCalificator.timeRangesCollide(any, any, any, any))
+              .thenReturn(false);
+        });
+
+        test('Debe llamar los métodos esperados', ()async{
+          todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          await untilCalled(activityCompletitionValidator.isCompleted(any));
+          verify(activityCompletitionValidator.isCompleted(updatedActivity));
+          await untilCalled(activityTextControllersGenerator.updateNameController(any));
+          verify(activityTextControllersGenerator.updateNameController(chosenRepeatable!.name));
+          await untilCalled(activityTextControllersGenerator.updateMinutesDurationController(any));
+          verify(activityTextControllersGenerator.updateMinutesDurationController('${chosenRepeatable!.minutesDuration}'));
+          await untilCalled(activityTextControllersGenerator.updateWorkController(any));
+          verify(activityTextControllersGenerator.updateWorkController('${chosenRepeatable!.work}'));
+        });
+
+        test('Debe emitir los siguientes estados en el orden esperado ni el tiempo ni el rango de tiempo colisiona', ()async{
+          final states = [
+            OnCreatingActivity(
+              day: day,
+              repeatableActivities: repeatableActivities,
+              activity: updatedActivity,
+              restantWork: day.restantWork,
+              chosenRepeatableActivity: chosenRepeatable,
+              activityControllersContainer: activityTextControllersGenerator,
+              canEnd: true,
+              canBeModified: false
+            )
+          ];
+          todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          expectLater(todayBloc.stream, emitsInOrder(states));
+        });
+      });
+    });
+
+    
+  });
 }
 
 void _testUpdateActivityInitialTime(){
@@ -571,6 +718,7 @@ void _testUpdateActivityInitialTime(){
         activity: initActivity,
         restantWork: tRestantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: false,
         canBeModified: false
       ));
@@ -646,6 +794,7 @@ void _testUpdateActivityInitialTime(){
               repeatableActivities: const [],
               restantWork: tRestantWork,
               chosenRepeatableActivity: null,
+              activityControllersContainer: activityTextControllersGenerator,
               canEnd: true,
               canBeModified: false
             )
@@ -666,6 +815,7 @@ void _testUpdateActivityInitialTime(){
               repeatableActivities: const [],
               restantWork: tRestantWork,
               chosenRepeatableActivity: null,
+              activityControllersContainer: activityTextControllersGenerator,
               canEnd: false,
               canBeModified: false
             )
@@ -699,6 +849,7 @@ void _testUpdateActivityInitialTime(){
             //TODO: Implementar data real
             repeatableActivities: const [],
             chosenRepeatableActivity: null,
+            activityControllersContainer: activityTextControllersGenerator,
             canEnd: false,
             message: DayBloc.currentRangeCollidesWithOtherMessage,
             type: ErrorType.initTimeCollides,
@@ -730,6 +881,7 @@ void _testUpdateActivityInitialTime(){
           repeatableActivities: const [],
           restantWork: tRestantWork,
           chosenRepeatableActivity: null,
+          activityControllersContainer: activityTextControllersGenerator,
           canEnd: false,
           message: DayBloc.initialTimeIsOnAnotherActivityRangeMessage,
           type: ErrorType.initTimeCollides,
@@ -759,6 +911,7 @@ void _testUpdateActivityInitialTime(){
       repeatableActivities: const [],
       chosenRepeatableActivity: null,
       restantWork: tRestantWork,
+      activityControllersContainer: activityTextControllersGenerator,
       canEnd: false,
       canBeModified: false
     ));
@@ -776,6 +929,7 @@ void _testUpdateActivityDuration(){
   late String newDuration;
   late int newDurationFormatted;
   setUp((){
+    
     currentActivities = const [
       HabitActivity(
         id: 10,
@@ -833,6 +987,7 @@ void _testUpdateActivityDuration(){
         repeatableActivities: const [],
         restantWork: restantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         canBeModified: true
       ));
@@ -875,6 +1030,7 @@ void _testUpdateActivityDuration(){
             repeatableActivities: const [],
             restantWork: restantWork,
             chosenRepeatableActivity: null,
+            activityControllersContainer: activityTextControllersGenerator,
             canEnd: false,
             canBeModified: true
           )
@@ -894,6 +1050,7 @@ void _testUpdateActivityDuration(){
             repeatableActivities: const [],
             restantWork: restantWork,
             chosenRepeatableActivity: null,
+            activityControllersContainer: activityTextControllersGenerator,
             canEnd: true,
             canBeModified: true
           )
@@ -922,6 +1079,7 @@ void _testUpdateActivityDuration(){
         repeatableActivities: const [],
         restantWork: restantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         canBeModified: false
       ));
@@ -961,6 +1119,7 @@ void _testUpdateActivityDuration(){
           repeatableActivities: const [],
           restantWork: restantWork,
           chosenRepeatableActivity: null,
+          activityControllersContainer: activityTextControllersGenerator,
           canEnd: false,
           canBeModified: false
         )
@@ -980,6 +1139,7 @@ void _testUpdateActivityDuration(){
           repeatableActivities: const [],
           restantWork: restantWork,
           chosenRepeatableActivity: null,
+          activityControllersContainer: activityTextControllersGenerator,
           canEnd: true,
           canBeModified: false
         )
@@ -995,12 +1155,15 @@ void _testChangeSaveActivityToRepeat(){
 }
 
 void _testCreateActivity(){
+  late MockActivityTextControllersGenerator controllersGenerator;
   late CustomDate dayDate;
   late List<HabitActivity> initDayActivities;
   late Day initDay;
   late HabitActivityCreation activity;
   late int initRestantWork;
   setUp((){
+    controllersGenerator = MockActivityTextControllersGenerator();
+    
     dayDate = CustomDate.fromDateTime(
       DateTime.now()
     );
@@ -1070,7 +1233,8 @@ void _testCreateActivity(){
         restantWork: initRestantWork,
         chosenRepeatableActivity: null,
         canEnd: true,
-        canBeModified: false
+        canBeModified: false,
+        activityControllersContainer: controllersGenerator
       ));
       updatedRestantWork = 9;
       updatedDay = Day(
@@ -1186,6 +1350,7 @@ void _testCreateActivity(){
       repeatableActivities: const [],
       restantWork: initRestantWork,
       chosenRepeatableActivity: null,
+      activityControllersContainer: activityTextControllersGenerator,
       canEnd: true,
       canBeModified: true
     ));
@@ -1197,6 +1362,7 @@ void _testCreateActivity(){
         repeatableActivities: const [],
         restantWork: initRestantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         message: DayBloc.insufficientRestantWorkMessage,
         type: ErrorType.notEnoughWork,
@@ -1220,6 +1386,7 @@ void _testCreateActivity(){
       repeatableActivities: const [],
       restantWork: initRestantWork,
       chosenRepeatableActivity: null,
+      activityControllersContainer: activityTextControllersGenerator,
       canEnd: true,
       canBeModified: false
     ));
@@ -1231,6 +1398,7 @@ void _testCreateActivity(){
         repeatableActivities: const [],
         restantWork: initRestantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         message: DayBloc.currentRangeCollidesWithOtherMessage,
         type: ErrorType.durationCollides,
@@ -1253,6 +1421,7 @@ void _testCreateActivity(){
       repeatableActivities: const [],
       restantWork: initRestantWork,
       chosenRepeatableActivity: null,
+      activityControllersContainer: activityTextControllersGenerator,
       canEnd: true,
       canBeModified: true
     ));
@@ -1271,6 +1440,7 @@ void _testCreateActivity(){
         repeatableActivities: const [],
         restantWork: initRestantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         message: message,
         type: ErrorType.general,
@@ -1293,6 +1463,7 @@ void _testCreateActivity(){
       repeatableActivities: const [],
       chosenRepeatableActivity: null,
       restantWork: initRestantWork,
+      activityControllersContainer: activityTextControllersGenerator,
       canEnd: true,
       canBeModified: false
     ));
@@ -1310,6 +1481,7 @@ void _testCreateActivity(){
         repeatableActivities: const [],
         restantWork: initRestantWork,
         chosenRepeatableActivity: null,
+        activityControllersContainer: activityTextControllersGenerator,
         canEnd: true,
         message: DayBloc.unexpectedErrorMessage,
         type: ErrorType.general,

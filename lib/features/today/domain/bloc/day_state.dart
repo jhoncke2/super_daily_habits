@@ -74,6 +74,7 @@ class OnCreatingActivity extends OnDay{
   final HabitActivityCreation activity;
   final List<HabitActivity> repeatableActivities;
   final HabitActivity? chosenRepeatableActivity;
+  final ActivityTextControllersContainer activityControllersContainer;
   final bool canEnd;
   const OnCreatingActivity({
     required super.day,
@@ -82,6 +83,7 @@ class OnCreatingActivity extends OnDay{
     required this.activity,
     required this.repeatableActivities,
     required this.chosenRepeatableActivity,
+    required this.activityControllersContainer,
     required this.canEnd
   });
   @override
@@ -89,6 +91,7 @@ class OnCreatingActivity extends OnDay{
     activity,
     repeatableActivities,
     chosenRepeatableActivity,
+    activityControllersContainer.isEmpty,
     canEnd
   ];
 }
@@ -105,6 +108,7 @@ class OnCreatingActivityError extends OnCreatingActivity implements OnError{
     required super.repeatableActivities,
     required super.chosenRepeatableActivity,
     required super.canBeModified,
+    required super.activityControllersContainer,
     required super.canEnd,
     required this.message,
     required this.type

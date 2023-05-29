@@ -13,6 +13,7 @@ import 'package:super_daily_habits/features/today/data/data_sources/day_local_da
 import 'package:super_daily_habits/features/today/data/day_repository_impl.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart';
+import 'package:super_daily_habits/features/today/domain/helpers/activity_text_controllers_generator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart';
 import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart';
@@ -62,6 +63,7 @@ Future<void> init() async {
       localDataSource: sl<DayLocalDataSource>()
     )
   );
+  final activityTextControllersGenerator = ActivityTextControllersGeneratorImpl();
   final currentDateGetter = CurrentDateGetterImpl();
   final activityCompletitionValidator = ActivityCompletitionValidatorImpl();
   final timeRangeCalificator = TimeRangeCalificatorImpl(
@@ -72,6 +74,7 @@ Future<void> init() async {
     () => DayBloc(
       repository: sl<DayRepository>(),
       commonRepository: sl<CommonRepository>(),
+      activityTextControllersGenerator: activityTextControllersGenerator,
       currentDateGetter: currentDateGetter,
       activityCompletitionValidator: activityCompletitionValidator,
       timeRangeCalificator: timeRangeCalificator,

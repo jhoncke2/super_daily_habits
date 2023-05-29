@@ -3,32 +3,37 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i5;
+import 'dart:async' as _i6;
+import 'dart:ui' as _i17;
 
+import 'package:flutter/material.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:super_daily_habits/common/domain/common_repository.dart' as _i9;
+import 'package:super_daily_habits/common/domain/common_repository.dart'
+    as _i10;
 import 'package:super_daily_habits/features/today/domain/day_repository.dart'
-    as _i4;
+    as _i5;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart'
-    as _i8;
+    as _i9;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart'
-    as _i6;
+    as _i7;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
-    as _i3;
+    as _i4;
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart'
-    as _i13;
+    as _i15;
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart'
     as _i2;
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart'
-    as _i7;
+    as _i8;
 import 'package:super_daily_habits/features/today/domain/helpers/activity_completition_validator.dart'
+    as _i13;
+import 'package:super_daily_habits/features/today/domain/helpers/activity_text_controllers_generator.dart'
     as _i11;
 import 'package:super_daily_habits/features/today/domain/helpers/current_date_getter.dart'
-    as _i10;
-import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart'
-    as _i14;
-import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
     as _i12;
+import 'package:super_daily_habits/features/today/domain/helpers/day_calificator.dart'
+    as _i16;
+import 'package:super_daily_habits/features/today/domain/helpers/time_range_calificator.dart'
+    as _i14;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -51,8 +56,9 @@ class _FakeDay_0 extends _i1.SmartFake implements _i2.Day {
         );
 }
 
-class _FakeCustomDate_1 extends _i1.SmartFake implements _i3.CustomDate {
-  _FakeCustomDate_1(
+class _FakeTextEditingController_1 extends _i1.SmartFake
+    implements _i3.TextEditingController {
+  _FakeTextEditingController_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -61,31 +67,76 @@ class _FakeCustomDate_1 extends _i1.SmartFake implements _i3.CustomDate {
         );
 }
 
+class _FakeCustomDate_2 extends _i1.SmartFake implements _i4.CustomDate {
+  _FakeCustomDate_2(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeTextSelection_3 extends _i1.SmartFake implements _i3.TextSelection {
+  _FakeTextSelection_3(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeTextEditingValue_4 extends _i1.SmartFake
+    implements _i3.TextEditingValue {
+  _FakeTextEditingValue_4(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeTextSpan_5 extends _i1.SmartFake implements _i3.TextSpan {
+  _FakeTextSpan_5(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+
+  @override
+  String toString({_i3.DiagnosticLevel? minLevel = _i3.DiagnosticLevel.info}) =>
+      super.toString();
+}
+
 /// A class which mocks [DayRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
+class MockDayRepository extends _i1.Mock implements _i5.DayRepository {
   MockDayRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<_i2.Day> getDayByDate(_i3.CustomDate? date) => (super.noSuchMethod(
+  _i6.Future<_i2.Day> getDayByDate(_i4.CustomDate? date) => (super.noSuchMethod(
         Invocation.method(
           #getDayByDate,
           [date],
         ),
-        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+        returnValue: _i6.Future<_i2.Day>.value(_FakeDay_0(
           this,
           Invocation.method(
             #getDayByDate,
             [date],
           ),
         )),
-      ) as _i5.Future<_i2.Day>);
+      ) as _i6.Future<_i2.Day>);
   @override
-  _i5.Future<_i2.Day> setActivityToDay(
-    _i6.HabitActivityCreation? activity,
+  _i6.Future<_i2.Day> setActivityToDay(
+    _i7.HabitActivityCreation? activity,
     _i2.Day? day,
     int? newRestantWork,
   ) =>
@@ -98,7 +149,7 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             newRestantWork,
           ],
         ),
-        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+        returnValue: _i6.Future<_i2.Day>.value(_FakeDay_0(
           this,
           Invocation.method(
             #setActivityToDay,
@@ -109,23 +160,23 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             ],
           ),
         )),
-      ) as _i5.Future<_i2.Day>);
+      ) as _i6.Future<_i2.Day>);
   @override
-  _i5.Future<_i2.Day> createDay(_i7.DayBase? day) => (super.noSuchMethod(
+  _i6.Future<_i2.Day> createDay(_i8.DayBase? day) => (super.noSuchMethod(
         Invocation.method(
           #createDay,
           [day],
         ),
-        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+        returnValue: _i6.Future<_i2.Day>.value(_FakeDay_0(
           this,
           Invocation.method(
             #createDay,
             [day],
           ),
         )),
-      ) as _i5.Future<_i2.Day>);
+      ) as _i6.Future<_i2.Day>);
   @override
-  _i5.Future<_i2.Day> updateActivityRestantWork(
+  _i6.Future<_i2.Day> updateActivityRestantWork(
     int? restantWork,
     _i2.Day? day,
   ) =>
@@ -137,7 +188,7 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             day,
           ],
         ),
-        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+        returnValue: _i6.Future<_i2.Day>.value(_FakeDay_0(
           this,
           Invocation.method(
             #updateActivityRestantWork,
@@ -147,10 +198,10 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             ],
           ),
         )),
-      ) as _i5.Future<_i2.Day>);
+      ) as _i6.Future<_i2.Day>);
   @override
-  _i5.Future<_i2.Day> deleteHabitFromDay(
-    _i8.HabitActivity? habit,
+  _i6.Future<_i2.Day> deleteHabitFromDay(
+    _i9.HabitActivity? habit,
     _i2.Day? day,
   ) =>
       (super.noSuchMethod(
@@ -161,7 +212,7 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             day,
           ],
         ),
-        returnValue: _i5.Future<_i2.Day>.value(_FakeDay_0(
+        returnValue: _i6.Future<_i2.Day>.value(_FakeDay_0(
           this,
           Invocation.method(
             #deleteHabitFromDay,
@@ -171,81 +222,152 @@ class MockDayRepository extends _i1.Mock implements _i4.DayRepository {
             ],
           ),
         )),
-      ) as _i5.Future<_i2.Day>);
+      ) as _i6.Future<_i2.Day>);
   @override
-  _i5.Future<List<_i8.HabitActivity>> getAllRepeatableActivities() =>
+  _i6.Future<List<_i9.HabitActivity>> getAllRepeatableActivities() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllRepeatableActivities,
           [],
         ),
         returnValue:
-            _i5.Future<List<_i8.HabitActivity>>.value(<_i8.HabitActivity>[]),
-      ) as _i5.Future<List<_i8.HabitActivity>>);
+            _i6.Future<List<_i9.HabitActivity>>.value(<_i9.HabitActivity>[]),
+      ) as _i6.Future<List<_i9.HabitActivity>>);
 }
 
 /// A class which mocks [CommonRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCommonRepository extends _i1.Mock implements _i9.CommonRepository {
+class MockCommonRepository extends _i1.Mock implements _i10.CommonRepository {
   MockCommonRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<void> setCommonWork(int? work) => (super.noSuchMethod(
+  _i6.Future<void> setCommonWork(int? work) => (super.noSuchMethod(
         Invocation.method(
           #setCommonWork,
           [work],
         ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
   @override
-  _i5.Future<int> getCommonWork() => (super.noSuchMethod(
+  _i6.Future<int> getCommonWork() => (super.noSuchMethod(
         Invocation.method(
           #getCommonWork,
           [],
         ),
-        returnValue: _i5.Future<int>.value(0),
-      ) as _i5.Future<int>);
+        returnValue: _i6.Future<int>.value(0),
+      ) as _i6.Future<int>);
+}
+
+/// A class which mocks [ActivityTextControllersGenerator].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockActivityTextControllersGenerator extends _i1.Mock
+    implements _i11.ActivityTextControllersGenerator {
+  MockActivityTextControllersGenerator() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.TextEditingController get nameController => (super.noSuchMethod(
+        Invocation.getter(#nameController),
+        returnValue: _FakeTextEditingController_1(
+          this,
+          Invocation.getter(#nameController),
+        ),
+      ) as _i3.TextEditingController);
+  @override
+  _i3.TextEditingController get minutesDurationController =>
+      (super.noSuchMethod(
+        Invocation.getter(#minutesDurationController),
+        returnValue: _FakeTextEditingController_1(
+          this,
+          Invocation.getter(#minutesDurationController),
+        ),
+      ) as _i3.TextEditingController);
+  @override
+  _i3.TextEditingController get workController => (super.noSuchMethod(
+        Invocation.getter(#workController),
+        returnValue: _FakeTextEditingController_1(
+          this,
+          Invocation.getter(#workController),
+        ),
+      ) as _i3.TextEditingController);
+  @override
+  bool get isEmpty => (super.noSuchMethod(
+        Invocation.getter(#isEmpty),
+        returnValue: false,
+      ) as bool);
+  @override
+  void generate() => super.noSuchMethod(
+        Invocation.method(
+          #generate,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void updateNameController(String? newValue) => super.noSuchMethod(
+        Invocation.method(
+          #updateNameController,
+          [newValue],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void updateMinutesDurationController(String? newValue) => super.noSuchMethod(
+        Invocation.method(
+          #updateMinutesDurationController,
+          [newValue],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  dynamic updateWorkController(String? newValue) =>
+      super.noSuchMethod(Invocation.method(
+        #updateWorkController,
+        [newValue],
+      ));
 }
 
 /// A class which mocks [CurrentDateGetter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCurrentDateGetter extends _i1.Mock implements _i10.CurrentDateGetter {
+class MockCurrentDateGetter extends _i1.Mock implements _i12.CurrentDateGetter {
   MockCurrentDateGetter() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.CustomDate getTodayDate() => (super.noSuchMethod(
+  _i4.CustomDate getTodayDate() => (super.noSuchMethod(
         Invocation.method(
-          #getCurrentDate,
+          #getTodayDate,
           [],
         ),
-        returnValue: _FakeCustomDate_1(
+        returnValue: _FakeCustomDate_2(
           this,
           Invocation.method(
-            #getCurrentDate,
+            #getTodayDate,
             [],
           ),
         ),
-      ) as _i3.CustomDate);
+      ) as _i4.CustomDate);
 }
 
 /// A class which mocks [ActivityCompletitionValidator].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockActivityCompletitionValidator extends _i1.Mock
-    implements _i11.ActivityCompletitionValidator {
+    implements _i13.ActivityCompletitionValidator {
   MockActivityCompletitionValidator() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  bool isCompleted(_i6.HabitActivityCreation? activity) => (super.noSuchMethod(
+  bool isCompleted(_i7.HabitActivityCreation? activity) => (super.noSuchMethod(
         Invocation.method(
           #isCompleted,
           [activity],
@@ -258,15 +380,15 @@ class MockActivityCompletitionValidator extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTimeRangeCalificator extends _i1.Mock
-    implements _i12.TimeRangeCalificator {
+    implements _i14.TimeRangeCalificator {
   MockTimeRangeCalificator() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
   bool timeIsBetweenTimeRange(
-    _i13.CustomTime? time,
-    _i13.CustomTime? rangeInit,
+    _i15.CustomTime? time,
+    _i15.CustomTime? rangeInit,
     int? minutesDuration,
   ) =>
       (super.noSuchMethod(
@@ -282,9 +404,9 @@ class MockTimeRangeCalificator extends _i1.Mock
       ) as bool);
   @override
   bool timeRangesCollide(
-    _i13.CustomTime? initialTime1,
+    _i15.CustomTime? initialTime1,
     int? duration1,
-    _i13.CustomTime? initialTime2,
+    _i15.CustomTime? initialTime2,
     int? duration2,
   ) =>
       (super.noSuchMethod(
@@ -304,7 +426,7 @@ class MockTimeRangeCalificator extends _i1.Mock
 /// A class which mocks [DayCalificator].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDayCalificator extends _i1.Mock implements _i14.DayCalificator {
+class MockDayCalificator extends _i1.Mock implements _i16.DayCalificator {
   MockDayCalificator() {
     _i1.throwOnMissingStub(this);
   }
@@ -312,7 +434,7 @@ class MockDayCalificator extends _i1.Mock implements _i14.DayCalificator {
   @override
   bool canBeModified(
     _i2.Day? day,
-    _i3.CustomDate? currentDate,
+    _i4.CustomDate? currentDate,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -324,4 +446,166 @@ class MockDayCalificator extends _i1.Mock implements _i14.DayCalificator {
         ),
         returnValue: false,
       ) as bool);
+  @override
+  bool hasEnoughRestantWork(
+    _i2.Day? day,
+    int? workToAdd,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #hasEnoughRestantWork,
+          [
+            day,
+            workToAdd,
+          ],
+        ),
+        returnValue: false,
+      ) as bool);
+}
+
+/// A class which mocks [TextEditingController].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockTextEditingController extends _i1.Mock
+    implements _i3.TextEditingController {
+  MockTextEditingController() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  String get text => (super.noSuchMethod(
+        Invocation.getter(#text),
+        returnValue: '',
+      ) as String);
+  @override
+  set text(String? newText) => super.noSuchMethod(
+        Invocation.setter(
+          #text,
+          newText,
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  set value(_i3.TextEditingValue? newValue) => super.noSuchMethod(
+        Invocation.setter(
+          #value,
+          newValue,
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  _i3.TextSelection get selection => (super.noSuchMethod(
+        Invocation.getter(#selection),
+        returnValue: _FakeTextSelection_3(
+          this,
+          Invocation.getter(#selection),
+        ),
+      ) as _i3.TextSelection);
+  @override
+  set selection(_i3.TextSelection? newSelection) => super.noSuchMethod(
+        Invocation.setter(
+          #selection,
+          newSelection,
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  _i3.TextEditingValue get value => (super.noSuchMethod(
+        Invocation.getter(#value),
+        returnValue: _FakeTextEditingValue_4(
+          this,
+          Invocation.getter(#value),
+        ),
+      ) as _i3.TextEditingValue);
+  @override
+  bool get hasListeners => (super.noSuchMethod(
+        Invocation.getter(#hasListeners),
+        returnValue: false,
+      ) as bool);
+  @override
+  _i3.TextSpan buildTextSpan({
+    required _i3.BuildContext? context,
+    _i3.TextStyle? style,
+    required bool? withComposing,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #buildTextSpan,
+          [],
+          {
+            #context: context,
+            #style: style,
+            #withComposing: withComposing,
+          },
+        ),
+        returnValue: _FakeTextSpan_5(
+          this,
+          Invocation.method(
+            #buildTextSpan,
+            [],
+            {
+              #context: context,
+              #style: style,
+              #withComposing: withComposing,
+            },
+          ),
+        ),
+      ) as _i3.TextSpan);
+  @override
+  void clear() => super.noSuchMethod(
+        Invocation.method(
+          #clear,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void clearComposing() => super.noSuchMethod(
+        Invocation.method(
+          #clearComposing,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  bool isSelectionWithinTextBounds(_i3.TextSelection? selection) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #isSelectionWithinTextBounds,
+          [selection],
+        ),
+        returnValue: false,
+      ) as bool);
+  @override
+  void addListener(_i17.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void removeListener(_i17.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void notifyListeners() => super.noSuchMethod(
+        Invocation.method(
+          #notifyListeners,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 }

@@ -3,6 +3,7 @@ import 'package:super_daily_habits/features/today/domain/entities/day/day.dart';
 
 abstract class DayCalificator{
   bool canBeModified(Day day, CustomDate currentDate);
+  bool hasEnoughRestantWork(Day day, int workToAdd);
 }
 
 class DayCalificatorImpl implements DayCalificator{
@@ -19,4 +20,8 @@ class DayCalificatorImpl implements DayCalificator{
       date.month,
       date.day
     );
+    
+  @override
+  bool hasEnoughRestantWork(Day day, int addedWork) =>
+    day.restantWork - addedWork >= 0;
 }
