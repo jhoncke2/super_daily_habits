@@ -510,10 +510,12 @@ void _testInitActivityCreation(){
 
 void _testChooseRepeatableActivity(){
   /**
-   * TODO: VErificar que no colisione con su:
-   *      * initHour
-   *      * duration
-   *      * work
+    *     TODO: Cambiar el parámetro del evento de HabitActivity a int (index del select)
+    *      * Al final del select se agregará un nuevo elemento (no seleccionar ningún hábito)
+    *      * Tres casos de selección
+    *        1. El index de un repeatable activity
+    *        2. el último elemento del select: des-seleccionar el actual repeatable activity.
+    *        3. elemento nulo: es cuando no se selecciona nada.
    */
 
   late List<HabitActivity> dayActivities;
@@ -598,7 +600,7 @@ void _testChooseRepeatableActivity(){
               .thenReturn(true);
       });
 
-      group('Cuando ni el tiempo ni el rango de tiempo colisionan', (){
+      group('Cuando ni el initialTime ni el rango de tiempo colisionan', (){
         setUp((){
           updatedActivity = HabitActivityCreation(
             name: chosenRepeatable!.name,
@@ -615,6 +617,24 @@ void _testChooseRepeatableActivity(){
 
         test('Debe llamar los métodos esperados', ()async{
           todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          await untilCalled(dayCalificator.hasEnoughRestantWork(any, any));
+          verify(dayCalificator.hasEnoughRestantWork(
+            day,
+            chosenRepeatable!.work
+          ));
+          await untilCalled(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any));
+          verify(timeRangeCalificator.timeIsBetweenTimeRange(
+            updatedActivity.initialTime,
+            dayActivities[0].initialTime,
+            dayActivities[0].minutesDuration
+          ));
+          await untilCalled(timeRangeCalificator.timeRangesCollide(any, any, any, any));
+          verify(timeRangeCalificator.timeRangesCollide(
+            updatedActivity.initialTime,
+            updatedActivity.minutesDuration,
+            dayActivities[0].initialTime,
+            dayActivities[0].minutesDuration
+          ));
           await untilCalled(activityCompletitionValidator.isCompleted(any));
           verify(activityCompletitionValidator.isCompleted(updatedActivity));
           await untilCalled(activityTextControllersGenerator.updateNameController(any));
@@ -625,7 +645,84 @@ void _testChooseRepeatableActivity(){
           verify(activityTextControllersGenerator.updateWorkController('${chosenRepeatable!.work}'));
         });
 
-        test('Debe emitir los siguientes estados en el orden esperado ni el tiempo ni el rango de tiempo colisiona', ()async{
+        test('Debe emitir los siguientes estados en el orden esperado', ()async{
+          final states = [
+            OnCreatingActivity(
+              day: day,
+              repeatableActivities: repeatableActivities,
+              activity: updatedActivity,
+              restantWork: day.restantWork,
+              chosenRepeatableActivity: chosenRepeatable,
+              activityControllersContainer: activityTextControllersGenerator,
+              canEnd: true,
+              canBeModified: false
+            )
+          ];
+          todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          expectLater(todayBloc.stream, emitsInOrder(states));
+        });
+      });
+
+      group('Cuando solo el initialTime colisiona', (){
+        setUp((){
+          updatedActivity = HabitActivityCreation(
+            name: chosenRepeatable!.name,
+            minutesDuration: chosenRepeatable!.minutesDuration,
+            work: chosenRepeatable!.work,
+            initialTime: null,
+            repeatability: ActivityRepeatability.repeated
+          );
+          when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
+            .thenReturn(true);
+          when(timeRangeCalificator.timeRangesCollide(any, any, any, any))
+              .thenReturn(false);
+        });
+
+        test('Debe emitir los siguientes estados en el orden esperado', ()async{
+          final states = [
+            OnCreatingActivity(
+              day: day,
+              repeatableActivities: repeatableActivities,
+              activity: updatedActivity,
+              restantWork: day.restantWork,
+              chosenRepeatableActivity: chosenRepeatable,
+              activityControllersContainer: activityTextControllersGenerator,
+              canEnd: true,
+              canBeModified: false
+            )
+          ];
+          todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          expectLater(todayBloc.stream, emitsInOrder(states));
+        });
+      });
+
+      group('Cuando solo el duration (rango de tiempo) colisiona', (){
+        setUp((){
+          updatedActivity = HabitActivityCreation(
+            name: chosenRepeatable!.name,
+            minutesDuration: 1,
+            work: chosenRepeatable!.work,
+            initialTime: chosenRepeatable!.initialTime,
+            repeatability: ActivityRepeatability.repeated
+          );
+          when(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any))
+            .thenReturn(false);
+          when(timeRangeCalificator.timeRangesCollide(any, any, any, any))
+              .thenReturn(true);
+        });
+
+        test('Debe llamar los métodos esperados', ()async{
+          todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+          // Se obvia todos los métodos anteriores que se deben llamar. Aquí solo importa los controllers.
+          await untilCalled(activityTextControllersGenerator.updateNameController(any));
+          verify(activityTextControllersGenerator.updateNameController(chosenRepeatable!.name));
+          await untilCalled(activityTextControllersGenerator.updateMinutesDurationController(any));
+          verify(activityTextControllersGenerator.updateMinutesDurationController('1'));
+          await untilCalled(activityTextControllersGenerator.updateWorkController(any));
+          verify(activityTextControllersGenerator.updateWorkController('${chosenRepeatable!.work}'));
+        });
+
+        test('Debe emitir los siguientes estados en el orden esperado', ()async{
           final states = [
             OnCreatingActivity(
               day: day,
@@ -644,7 +741,41 @@ void _testChooseRepeatableActivity(){
       });
     });
 
-    
+    group('Cuando el día no tiene suficiente restant work', (){
+      setUp((){
+        when(dayCalificator.hasEnoughRestantWork(any, any))
+            .thenReturn(false);
+      });
+
+      test('Debe llamar los métodos esperados', ()async{
+        todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+        verifyNever(timeRangeCalificator.timeIsBetweenTimeRange(any, any, any));
+        verifyNever(timeRangeCalificator.timeRangesCollide(any, any, any, any));
+        verifyNever(activityCompletitionValidator.isCompleted(any));
+        verifyNever(activityTextControllersGenerator.updateNameController(any));
+        verifyNever(activityTextControllersGenerator.updateMinutesDurationController(any));
+        verifyNever(activityTextControllersGenerator.updateWorkController(any));
+      });
+
+      test('Debe emitir los siguientes estados en el orden esperado', ()async{
+        final states = [
+          OnCreatingActivityError(
+            day: day,
+            repeatableActivities: repeatableActivities,
+            activity: initActivity,
+            restantWork: day.restantWork,
+            chosenRepeatableActivity: null,
+            activityControllersContainer: activityTextControllersGenerator,
+            canEnd: false,
+            canBeModified: false,
+            message: DayBloc.insufficientRestantWorkMessage,
+            type: ErrorType.general
+          )
+        ];
+        todayBloc.add(ChooseRepeatableActivity(chosenRepeatable));
+        expectLater(todayBloc.stream, emitsInOrder(states));
+      });
+    });
   });
 }
 

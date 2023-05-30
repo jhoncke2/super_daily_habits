@@ -24,7 +24,7 @@ class TimeRangeCalificatorImpl implements TimeRangeCalificator{
         )
     )
     || (
-      time.hour == rangeInit.hour && rangeInit.minute <= time.minute && time.minute <= rangeEnd.minute
+      time.hour == rangeInit.hour && rangeInit.minute <= time.minute && time.minute < rangeEnd.minute
     )
     ;
   }

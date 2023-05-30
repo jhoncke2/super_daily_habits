@@ -74,16 +74,16 @@ void _testTimeIsBetweenTimeRange(){
     test('Debe lanzar <false> cuando el minuto del calificated es <mayor> al minuto <final>', (){
       calificated = const CustomTime(
         hour: 5,
-        minute: 35
+        minute: 41
       );
       final result = calificator.timeIsBetweenTimeRange(
         calificated,
         initial,
         minutesDuration
       );
-      expect(result, true);
+      expect(result, false);
     });
-    test('Debe lanzar <false> cuando el minuto del calificated es <igual> al minuto <inicial>', (){
+    test('Debe lanzar <true> cuando el minuto del calificated es <igual> al minuto <inicial>', (){
       calificated = const CustomTime(
         hour: 5,
         minute: 20
@@ -106,7 +106,7 @@ void _testTimeIsBetweenTimeRange(){
         initial,
         minutesDuration
       );
-      expect(result, true);
+      expect(result, false);
     });
 
     test('''Debe lanzar <false> cuando la hora del calificated es <menor> a la hora en común

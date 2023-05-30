@@ -184,27 +184,62 @@ class DayBloc extends Bloc<DayEvent, DayState> {
   void _chooseRepeatableActivity(Emitter<DayState> emit, ChooseRepeatableActivity event){
     final initialState = (state as OnCreatingActivity);
     final eventActivity = event.activity!;
-    final newActivity = HabitActivityCreation(
-      name: eventActivity.name,
-      minutesDuration: eventActivity.minutesDuration,
-      work: eventActivity.work,
-      initialTime: eventActivity.initialTime,
-      repeatability: ActivityRepeatability.repeated
+    final dayHasEnoughWork = dayCalificator.hasEnoughRestantWork(
+      initialState.day,
+      eventActivity.work
     );
-    final canEnd = activityCompletitionValidator.isCompleted(newActivity);
-    activityTextControllersGenerator.updateNameController(eventActivity.name);
-    activityTextControllersGenerator.updateMinutesDurationController('${eventActivity.minutesDuration}');
-    activityTextControllersGenerator.updateWorkController('${eventActivity.work}');
-    emit(OnCreatingActivity(
-      day: initialState.day,
-      activity: newActivity,
-      repeatableActivities: initialState.repeatableActivities,
-      restantWork: initialState.restantWork,
-      chosenRepeatableActivity: event.activity,
-      activityControllersContainer: initialState.activityControllersContainer,
-      canEnd: canEnd,
-      canBeModified: initialState.canBeModified
-    ));
+    if(dayHasEnoughWork){
+      final timeAdditionRestriction = _defineTimeAdditionRestriction(
+        initialState,
+        eventActivity.initialTime,
+        eventActivity.minutesDuration
+      );
+      CustomTime? initTime;
+      if(!timeAdditionRestriction.timeIsBetweenAnyActivityRange){
+        initTime = eventActivity.initialTime;
+      }
+      late int minutesDuration;
+      if(timeAdditionRestriction.newRangeCollides){
+        minutesDuration = 1;
+      }else{
+        minutesDuration = eventActivity.minutesDuration;
+      }
+      final newActivity = HabitActivityCreation(
+        name: eventActivity.name,
+        minutesDuration: minutesDuration,
+        work: eventActivity.work,
+        initialTime: initTime,
+        repeatability: ActivityRepeatability.repeated
+      );
+      final canEnd = activityCompletitionValidator.isCompleted(newActivity);
+      activityTextControllersGenerator.updateNameController(eventActivity.name);
+      activityTextControllersGenerator.updateMinutesDurationController('${newActivity.minutesDuration}');
+      activityTextControllersGenerator.updateWorkController('${eventActivity.work}');
+      emit(OnCreatingActivity(
+        day: initialState.day,
+        activity: newActivity,
+        repeatableActivities: initialState.repeatableActivities,
+        restantWork: initialState.restantWork,
+        chosenRepeatableActivity: event.activity,
+        activityControllersContainer: initialState.activityControllersContainer,
+        canEnd: canEnd,
+        canBeModified: initialState.canBeModified
+      ));
+    }else{
+      emit(OnCreatingActivityError(
+        day: initialState.day,
+        activity: initialState.activity,
+        repeatableActivities: initialState.repeatableActivities,
+        restantWork: initialState.restantWork,
+        chosenRepeatableActivity: initialState.chosenRepeatableActivity,
+        activityControllersContainer: initialState.activityControllersContainer,
+        canEnd: initialState.canEnd,
+        canBeModified: initialState.canBeModified,
+        message: insufficientRestantWorkMessage,
+        type: ErrorType.general
+      )); 
+    }
+    
   }
 
   void _updateActivityName(Emitter<DayState> emit, UpdateActivityName event){
@@ -250,7 +285,11 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         hour: event.initialTime!.hour,
         minute: event.initialTime!.minute
       );
-      final timeAdditionRestriction = _defineTimeAdditionRestriction(initialState, formattedInitialTime);
+      final timeAdditionRestriction = _defineTimeAdditionRestriction(
+        initialState,
+        formattedInitialTime,
+        initialState.activity.minutesDuration
+      );
       if(timeAdditionRestriction.timeIsBetweenAnyActivityRange || timeAdditionRestriction.newRangeCollides){
         _emitInitialTimeAdditionError(emit, initialState, timeAdditionRestriction);
       }else{
@@ -259,20 +298,20 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     }
   }
   
-  InitialTimeAdditionRestriction _defineTimeAdditionRestriction(OnCreatingActivity initialState, CustomTime formattedInitialTime){
+  InitialTimeAdditionRestriction _defineTimeAdditionRestriction(OnCreatingActivity initialState, CustomTime activityInitialtime, int activityMinutesDuration){
     final activities = initialState.day.activities;
     bool timeIsBetweenAnyActivityRange = false;
     bool newRangeCollides = false;
     for(int i = 0; i < activities.length && !timeIsBetweenAnyActivityRange; i++){
       final currentActivity = activities[i];
       timeIsBetweenAnyActivityRange |= timeRangeCalificator.timeIsBetweenTimeRange(
-        formattedInitialTime,
+        activityInitialtime,
         currentActivity.initialTime,
         currentActivity.minutesDuration
       );
       newRangeCollides |= timeRangeCalificator.timeRangesCollide(
-        formattedInitialTime,
-        initialState.activity.minutesDuration,
+        activityInitialtime,
+        activityMinutesDuration,
         currentActivity.initialTime,
         currentActivity.minutesDuration
       );
