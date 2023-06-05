@@ -13,8 +13,9 @@ abstract class DayLocalAdapter{
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities);
   String getStringMapFromDate(CustomDate date);
   Map<String, dynamic> getMapFromActivity(HabitActivityCreation activity);
-  Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, int activityId);
+  Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, HabitActivity activity);
   List<HabitActivity> getActivitiesFromJson(List<Map<String, dynamic>> jsonList);
+  HabitActivity getActivityFromJson(Map<String, dynamic> jsonActivity);
 }
 
 class DayLocalAdapterImpl extends DayLocalAdapter{
@@ -69,7 +70,10 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
     database.activitiesNameKey: activity.name,
     database.activitiesInitHourKey: _getStringMapFromTime(activity.initialTime!),
     database.activitiesDurationKey: activity.minutesDuration,
-    database.activitiesWorkKey: activity.work
+    database.activitiesWorkKey: activity.work,
+    database.activitiesIsRepeatableKey: activity.repeatability == ActivityRepeatability.repeatable?
+      1:
+      0
   };
 
   String _getStringMapFromTime(CustomTime time) => jsonEncode({
@@ -78,9 +82,13 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
   });
   
   @override
-  Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, int activityId) => {
+  Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, HabitActivity activity) => {
     database.daysActivitiesDayIdKey: dayId,
-    database.daysActivitiesActivityIdKey: activityId
+    database.daysActivitiesActivityIdKey: activity.id,
+    database.daysActivitiesInitHourKey: _getStringMapFromTime(
+      activity.initialTime
+    ),
+    database.daysActivitiesDurationKey: activity.minutesDuration
   };
   
   @override
@@ -123,5 +131,16 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
     ).toList(),
     totalWork: jsonDay[database.daysWorkKey],
     restantWork: jsonDay[database.daysRestantWorkKey]
+  );
+  
+  @override
+  HabitActivity getActivityFromJson(Map<String, dynamic> jsonActivity) => HabitActivity(
+    id: jsonActivity[database.idKey],
+    name: jsonActivity[database.activitiesNameKey],
+    minutesDuration: jsonActivity[database.activitiesDurationKey],
+    work: jsonActivity[database.activitiesWorkKey],
+    initialTime: _getTimeFromJsonString(
+      database.activitiesInitHourKey
+    )
   );
 }

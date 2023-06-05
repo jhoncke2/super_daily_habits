@@ -275,7 +275,6 @@ void _testGetDayById(){
 void _testSetActivityToDay(){
   late Day tDay;
   late HabitActivityCreation tActivity;
-  late Map<String, dynamic> tJsonActivity;
   late int tNewActivityId;
   late Map<String, dynamic> tJsonDayActivity;
   setUp((){
@@ -291,6 +290,18 @@ void _testSetActivityToDay(){
       totalWork: 10,
       restantWork: 5
     );
+    tNewActivityId = 1000;
+    tJsonDayActivity = {
+      'day_id': 0,
+      'activity_id': tNewActivityId,
+      'init_hour': '{x}',
+      'duration': 30
+    };
+    when(adapter.getMapFromDayIdAndActivityId(any, any))
+        .thenReturn(tJsonDayActivity);
+  });
+
+  test('Debe llamar los métodos esperados cuando no es repeated', ()async{
     tActivity = const HabitActivityCreation(
       name: 'act_x',
       initialTime: CustomTime(
@@ -301,30 +312,72 @@ void _testSetActivityToDay(){
       work: 10,
       repeatability: ActivityRepeatability.none
     );
-    tJsonActivity = {
+    final tJsonActivityToCreate = {
       'name': 'act_x',
       'initial_time': '{...initial_time...}',
       'duration': 30,
       'work': 10
     };
-    tNewActivityId = 1000;
-    tJsonDayActivity = {
-      'day_id': 0,
-      'activity_id': tNewActivityId
-    };
+    final tCreatedActivity = HabitActivity(
+      id: tNewActivityId,
+      name: 'act_x',
+      minutesDuration: 30,
+      work: 10,
+      initialTime: const CustomTime(
+        hour: 10,
+        minute: 20
+      ),
+    );
     when(adapter.getMapFromActivity(any))
-        .thenReturn(tJsonActivity);
+        .thenReturn(tJsonActivityToCreate);
     final ids = [tNewActivityId, -1];
     when(dbManager.insert(any, any))
         .thenAnswer((_) async => ids.removeAt(0));
-    when(adapter.getMapFromDayIdAndActivityId(any, any))
-        .thenReturn(tJsonDayActivity);
-  });
-
-  test('Debe llamar los métodos esperados cuando todo sale bien', ()async{
+    
     await dayLocalDataSource.setActivityToDay(tActivity, tDay);
     verify(adapter.getMapFromActivity(tActivity));
-    verify(dbManager.insert(activitiesTableName, tJsonActivity));
+    verify(dbManager.insert(activitiesTableName, tJsonActivityToCreate));
+    verify(adapter.getMapFromDayIdAndActivityId(tDay.id, tCreatedActivity));
+    verify(dbManager.insert(daysActivitiesTableName, tJsonDayActivity));
+  });
+
+  test('Debe llamar a los métodos esperados cuando es repeated', ()async{
+    final tRepeatedActivity = HabitActivity(
+      id: tNewActivityId,
+      name: 'act_x',
+      minutesDuration: 40,
+      work: 10,
+      initialTime: const CustomTime(
+        hour: 5,
+        minute: 10
+      )
+    );
+    final updatedActivity = HabitActivity(
+      id: tNewActivityId,
+      name: 'act_x',
+      minutesDuration: 30,
+      work: 10,
+      initialTime: const CustomTime(
+        hour: 10,
+        minute: 20
+      ),
+    );
+    tActivity = HabitActivityCreation(
+      name: 'act_x',
+      initialTime: const CustomTime(
+        hour: 10,
+        minute: 20
+      ),
+      minutesDuration: 30,
+      work: 10,
+      repeatability: ActivityRepeatability.repeated,
+      repeatedActivity: tRepeatedActivity
+    );
+    when(dbManager.insert(any, any))
+        .thenAnswer((_) async => 1);
+    await dayLocalDataSource.setActivityToDay(tActivity, tDay);
+    verifyNever(dbManager.insert(activitiesTableName, any));
+    verify(adapter.getMapFromDayIdAndActivityId(tDay.id, updatedActivity));
     verify(dbManager.insert(daysActivitiesTableName, tJsonDayActivity));
   });
 }

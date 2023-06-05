@@ -57,6 +57,8 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         _updateActivityMinutesDuration(emit, event);
       }else if(event is UpdateActivityWork){
         _updateActivityWork(emit, event);
+      }else if(event is ChangeSaveActivityToRepeat){
+        _changeSaveActivityToRepeat(emit);
       }else if(event is CreateActivity){
         await _createActivity(emit);
       }else if(event is CancelActivityCreation){
@@ -160,21 +162,24 @@ class DayBloc extends Bloc<DayEvent, DayState> {
   Future<void> _continueActivityCreationInitWithEnoughDayMinutes(Emitter<DayState> emit, OnDay initialState)async{
     final repeatableActivities = await repository.getAllRepeatableActivities();
     final today = initialState.day;
+    const initActivityMinutesDuration = 1;
+    const initActivityWork = 1;
     const activity = HabitActivityCreation(
       name: '',
       initialTime: null,
-      minutesDuration: 0,
-      work: 0,
+      minutesDuration: initActivityMinutesDuration,
+      work: initActivityWork,
       repeatability: ActivityRepeatability.none
     );
     activityTextControllersGenerator.generate();
+    activityTextControllersGenerator.updateMinutesDurationController('$initActivityMinutesDuration');
+    activityTextControllersGenerator.updateWorkController('$initActivityWork');
     final canEnd = activityCompletitionValidator.isCompleted(activity);
     emit(OnCreatingActivity(
       day: today,
       activity: activity,
       repeatableActivities: repeatableActivities,
       restantWork: initialState.restantWork,
-      chosenRepeatableActivity: null,
       activityControllersContainer: activityTextControllersGenerator,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified,
@@ -182,64 +187,104 @@ class DayBloc extends Bloc<DayEvent, DayState> {
   }
 
   void _chooseRepeatableActivity(Emitter<DayState> emit, ChooseRepeatableActivity event){
-    final initialState = (state as OnCreatingActivity);
-    final eventActivity = event.activity!;
-    final dayHasEnoughWork = dayCalificator.hasEnoughRestantWork(
-      initialState.day,
-      eventActivity.work
-    );
-    if(dayHasEnoughWork){
-      final timeAdditionRestriction = _defineTimeAdditionRestriction(
-        initialState,
-        eventActivity.initialTime,
-        eventActivity.minutesDuration
-      );
-      CustomTime? initTime;
-      if(!timeAdditionRestriction.timeIsBetweenAnyActivityRange){
-        initTime = eventActivity.initialTime;
-      }
-      late int minutesDuration;
-      if(timeAdditionRestriction.newRangeCollides){
-        minutesDuration = 1;
+    final index = event.index;
+    if(index != null){
+      final initialState = (state as OnCreatingActivity);
+      final repeatableActivities = initialState.repeatableActivities;
+      if(index == repeatableActivities.length){
+        _updateToNoRepeatableActivity(emit, initialState);
       }else{
-        minutesDuration = eventActivity.minutesDuration;
+        final eventActivity = initialState.repeatableActivities[index];
+        final dayHasEnoughWork = dayCalificator.hasEnoughRestantWork(
+          initialState.day,
+          eventActivity.work
+        );
+        if(dayHasEnoughWork){
+          _updateToRepeatableActivityWithEnoughWork(initialState, eventActivity, emit);
+        }else{
+          _updateToNoEnoughWorkRepeatableActivityError(emit, initialState);
+        }
       }
-      final newActivity = HabitActivityCreation(
-        name: eventActivity.name,
-        minutesDuration: minutesDuration,
-        work: eventActivity.work,
-        initialTime: initTime,
-        repeatability: ActivityRepeatability.repeated
-      );
-      final canEnd = activityCompletitionValidator.isCompleted(newActivity);
-      activityTextControllersGenerator.updateNameController(eventActivity.name);
-      activityTextControllersGenerator.updateMinutesDurationController('${newActivity.minutesDuration}');
-      activityTextControllersGenerator.updateWorkController('${eventActivity.work}');
-      emit(OnCreatingActivity(
-        day: initialState.day,
-        activity: newActivity,
-        repeatableActivities: initialState.repeatableActivities,
-        restantWork: initialState.restantWork,
-        chosenRepeatableActivity: event.activity,
-        activityControllersContainer: initialState.activityControllersContainer,
-        canEnd: canEnd,
-        canBeModified: initialState.canBeModified
-      ));
-    }else{
-      emit(OnCreatingActivityError(
-        day: initialState.day,
-        activity: initialState.activity,
-        repeatableActivities: initialState.repeatableActivities,
-        restantWork: initialState.restantWork,
-        chosenRepeatableActivity: initialState.chosenRepeatableActivity,
-        activityControllersContainer: initialState.activityControllersContainer,
-        canEnd: initialState.canEnd,
-        canBeModified: initialState.canBeModified,
-        message: insufficientRestantWorkMessage,
-        type: ErrorType.general
-      )); 
     }
-    
+  }
+
+  void _updateToNoRepeatableActivity(Emitter<DayState> emit, OnCreatingActivity initialState){
+    activityTextControllersGenerator.updateNameController('');
+    activityTextControllersGenerator.updateMinutesDurationController('1');
+    activityTextControllersGenerator.updateWorkController('1');
+    const activity = HabitActivityCreation(
+      name: '',
+      minutesDuration: 1,
+      work: 1,
+      initialTime: null,
+      repeatability: ActivityRepeatability.none
+    );
+    emit(OnCreatingActivity(
+      day: initialState.day,
+      activity: activity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      activityControllersContainer: initialState.activityControllersContainer,
+      canEnd: false,
+      canBeModified: initialState.canBeModified
+    ));
+  }
+
+  void _updateToRepeatableActivityWithEnoughWork(OnCreatingActivity initialState, HabitActivity eventActivity, Emitter<DayState> emit){
+    final newActivity = _getRepeatableActivityWithEnoughWork(initialState, eventActivity);
+    final canEnd = activityCompletitionValidator.isCompleted(newActivity);
+    activityTextControllersGenerator.updateNameController(newActivity.name);
+    activityTextControllersGenerator.updateMinutesDurationController('${newActivity.minutesDuration}');
+    activityTextControllersGenerator.updateWorkController('${newActivity.work}');
+    emit(OnCreatingActivity(
+      day: initialState.day,
+      activity: newActivity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      activityControllersContainer: initialState.activityControllersContainer,
+      canEnd: canEnd,
+      canBeModified: initialState.canBeModified
+    ));
+  }
+
+  HabitActivityCreation _getRepeatableActivityWithEnoughWork(OnCreatingActivity initialState, HabitActivity eventActivity){
+    final timeAdditionRestriction = _defineTimeAdditionRestriction(
+      initialState,
+      eventActivity.initialTime,
+      eventActivity.minutesDuration
+    );
+    CustomTime? initTime;
+    if(!timeAdditionRestriction.timeIsBetweenAnyActivityRange){
+      initTime = eventActivity.initialTime;
+    }
+    late int minutesDuration;
+    if(timeAdditionRestriction.newRangeCollides){
+      minutesDuration = 1;
+    }else{
+      minutesDuration = eventActivity.minutesDuration;
+    }
+    return HabitActivityCreation(
+      name: eventActivity.name,
+      minutesDuration: minutesDuration,
+      work: eventActivity.work,
+      initialTime: initTime,
+      repeatability: ActivityRepeatability.repeated,
+      repeatedActivity: eventActivity
+    );
+  }
+
+  void _updateToNoEnoughWorkRepeatableActivityError(Emitter<DayState> emit, OnCreatingActivity initialState){
+    emit(OnCreatingActivityError(
+      day: initialState.day,
+      activity: initialState.activity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      activityControllersContainer: initialState.activityControllersContainer,
+      canEnd: initialState.canEnd,
+      canBeModified: initialState.canBeModified,
+      message: insufficientRestantWorkMessage,
+      type: ErrorType.general
+    )); 
   }
 
   void _updateActivityName(Emitter<DayState> emit, UpdateActivityName event){
@@ -254,7 +299,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       activity: activity,
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
-      chosenRepeatableActivity: initialState.chosenRepeatableActivity,
       activityControllersContainer: initialState.activityControllersContainer,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified
@@ -328,7 +372,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       activity: initialState.activity,
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
-      chosenRepeatableActivity: initialState.chosenRepeatableActivity,
       activityControllersContainer: initialState.activityControllersContainer,
       canEnd: initialState.canEnd,
       message: timeAdditionRestriction.timeIsBetweenAnyActivityRange? 
@@ -350,7 +393,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
       activity: activity,
       repeatableActivities: initialState.repeatableActivities,
       restantWork: initialState.restantWork,
-      chosenRepeatableActivity: initialState.chosenRepeatableActivity,
       activityControllersContainer: initialState.activityControllersContainer,
       canEnd: canEnd,
       canBeModified: initialState.canBeModified
@@ -371,7 +413,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         activity: activity,
         repeatableActivities: initialState.repeatableActivities,
         restantWork: initialState.restantWork,
-        chosenRepeatableActivity: initialState.chosenRepeatableActivity,
         activityControllersContainer: initialState.activityControllersContainer,
         canEnd: canEnd,
         canBeModified: initialState.canBeModified
@@ -394,7 +435,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
         activity: activity,
         repeatableActivities: initialState.repeatableActivities,
         restantWork: initialState.restantWork,
-        chosenRepeatableActivity: initialState.chosenRepeatableActivity,
         activityControllersContainer: initialState.activityControllersContainer,
         canEnd: canEnd,
         canBeModified: initialState.canBeModified
@@ -402,6 +442,37 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     }on Object catch(_){
 
     }
+  }
+
+  void _changeSaveActivityToRepeat(Emitter<DayState> emit){
+    final initialState = (state as OnCreatingActivity);
+    final initActivity = initialState.activity;
+    final repeatState = initActivity.repeatability;
+    if(repeatState == ActivityRepeatability.none){
+      _emitNewSaveActivityToRepeatState(emit, initialState, ActivityRepeatability.repeatable);
+    }else if(repeatState == ActivityRepeatability.repeatable){
+      _emitNewSaveActivityToRepeatState(emit, initialState, ActivityRepeatability.none);
+    }
+  }
+
+  void _emitNewSaveActivityToRepeatState(Emitter<DayState> emit, OnCreatingActivity initialState, ActivityRepeatability repeatability){
+    final initActivity = initialState.activity;
+    final updatedActivity = HabitActivityCreation(
+      name: initActivity.name,
+      minutesDuration: initActivity.minutesDuration,
+      work: initActivity.work,
+      initialTime: initActivity.initialTime,
+      repeatability: repeatability
+    );
+    emit(OnCreatingActivity(
+      day: initialState.day,
+      activity: updatedActivity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      activityControllersContainer: initialState.activityControllersContainer,
+      canEnd: initialState.canEnd,
+      canBeModified: initialState.canBeModified
+    ));
   }
 
   Future<void> _createActivity(Emitter<DayState> emit)async{
@@ -439,21 +510,6 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     }
   }
 
-  void _emitActivityCreationError(Emitter<DayState> emit, OnCreatingActivity initialState, String errorMessage, ErrorType errorType){
-    emit(OnCreatingActivityError(
-      day: initialState.day,
-      activity: initialState.activity,
-      repeatableActivities: initialState.repeatableActivities,
-      restantWork: initialState.restantWork,
-      chosenRepeatableActivity: initialState.chosenRepeatableActivity,
-      activityControllersContainer: initialState.activityControllersContainer,
-      canEnd: initialState.canEnd,
-      message: errorMessage,
-      type: errorType,
-      canBeModified: initialState.canBeModified
-    ));
-  }
-
   Future<void> _endActivityCreation(Emitter<DayState> emit, OnCreatingActivity initialState)async{
     emit(OnLoadingTodayDay());
     final day = initialState.day;
@@ -472,6 +528,20 @@ class DayBloc extends Bloc<DayEvent, DayState> {
     emit(OnShowingDay(
       day: updatedDay,
       restantWork: updatedRestantWork,
+      canBeModified: initialState.canBeModified
+    ));
+  }
+
+  void _emitActivityCreationError(Emitter<DayState> emit, OnCreatingActivity initialState, String errorMessage, ErrorType errorType){
+    emit(OnCreatingActivityError(
+      day: initialState.day,
+      activity: initialState.activity,
+      repeatableActivities: initialState.repeatableActivities,
+      restantWork: initialState.restantWork,
+      activityControllersContainer: initialState.activityControllersContainer,
+      canEnd: initialState.canEnd,
+      message: errorMessage,
+      type: errorType,
       canBeModified: initialState.canBeModified
     ));
   }

@@ -3,22 +3,22 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i5;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:super_daily_habits/common/data/database.dart' as _i3;
+import 'package:super_daily_habits/common/data/database.dart' as _i4;
 import 'package:super_daily_habits/features/today/data/data_sources/day_local_adapter.dart'
-    as _i5;
+    as _i6;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart'
-    as _i9;
+    as _i3;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart'
-    as _i8;
+    as _i9;
 import 'package:super_daily_habits/features/today/domain/entities/custom_date.dart'
-    as _i7;
+    as _i8;
 import 'package:super_daily_habits/features/today/domain/entities/day/day.dart'
     as _i2;
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart'
-    as _i6;
+    as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -41,26 +41,36 @@ class _FakeDay_0 extends _i1.SmartFake implements _i2.Day {
         );
 }
 
+class _FakeHabitActivity_1 extends _i1.SmartFake implements _i3.HabitActivity {
+  _FakeHabitActivity_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [DatabaseManager].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
+class MockDatabaseManager extends _i1.Mock implements _i4.DatabaseManager {
   MockDatabaseManager() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<List<Map<String, dynamic>>> queryAll(String? tableName) =>
+  _i5.Future<List<Map<String, dynamic>>> queryAll(String? tableName) =>
       (super.noSuchMethod(
         Invocation.method(
           #queryAll,
           [tableName],
         ),
-        returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+        returnValue: _i5.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
-      ) as _i4.Future<List<Map<String, dynamic>>>);
+      ) as _i5.Future<List<Map<String, dynamic>>>);
   @override
-  _i4.Future<Map<String, dynamic>> querySingleOne(
+  _i5.Future<Map<String, dynamic>> querySingleOne(
     String? tableName,
     int? id,
   ) =>
@@ -73,10 +83,10 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
           ],
         ),
         returnValue:
-            _i4.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
-      ) as _i4.Future<Map<String, dynamic>>);
+            _i5.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i5.Future<Map<String, dynamic>>);
   @override
-  _i4.Future<List<Map<String, dynamic>>> queryWhere(
+  _i5.Future<List<Map<String, dynamic>>> queryWhere(
     String? tableName,
     String? whereStatement,
     List<dynamic>? whereVariables,
@@ -90,11 +100,11 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             whereVariables,
           ],
         ),
-        returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+        returnValue: _i5.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
-      ) as _i4.Future<List<Map<String, dynamic>>>);
+      ) as _i5.Future<List<Map<String, dynamic>>>);
   @override
-  _i4.Future<int> insert(
+  _i5.Future<int> insert(
     String? tableName,
     Map<String, dynamic>? data,
   ) =>
@@ -106,10 +116,10 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             data,
           ],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
   @override
-  _i4.Future<void> update(
+  _i5.Future<void> update(
     String? tableName,
     Map<String, dynamic>? updatedData,
     int? id,
@@ -123,11 +133,11 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             id,
           ],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
   @override
-  _i4.Future<void> remove(
+  _i5.Future<void> remove(
     String? tableName,
     int? id,
   ) =>
@@ -139,20 +149,20 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             id,
           ],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
   @override
-  _i4.Future<void> removeAll(String? tableName) => (super.noSuchMethod(
+  _i5.Future<void> removeAll(String? tableName) => (super.noSuchMethod(
         Invocation.method(
           #removeAll,
           [tableName],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
   @override
-  _i4.Future<List<Map<String, dynamic>>> queryInnerJoin(
+  _i5.Future<List<Map<String, dynamic>>> queryInnerJoin(
     String? tableName1,
     String? table1JoinedColumn,
     String? tableName2,
@@ -172,11 +182,11 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             whereVariables,
           ],
         ),
-        returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+        returnValue: _i5.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
-      ) as _i4.Future<List<Map<String, dynamic>>>);
+      ) as _i5.Future<List<Map<String, dynamic>>>);
   @override
-  _i4.Future<int> queryCount(
+  _i5.Future<int> queryCount(
     String? tableName,
     String? whereStatement,
     List<dynamic>? whereVariables,
@@ -190,10 +200,10 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             whereVariables,
           ],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
   @override
-  _i4.Future<void> removeWhere(
+  _i5.Future<void> removeWhere(
     String? tableName,
     String? whereStatement,
     List<dynamic>? whereVariables,
@@ -207,21 +217,21 @@ class MockDatabaseManager extends _i1.Mock implements _i3.DatabaseManager {
             whereVariables,
           ],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 }
 
 /// A class which mocks [DayLocalAdapter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDayLocalAdapter extends _i1.Mock implements _i5.DayLocalAdapter {
+class MockDayLocalAdapter extends _i1.Mock implements _i6.DayLocalAdapter {
   MockDayLocalAdapter() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  Map<String, dynamic> getMapFromDay(_i6.DayBase? day) => (super.noSuchMethod(
+  Map<String, dynamic> getMapFromDay(_i7.DayBase? day) => (super.noSuchMethod(
         Invocation.method(
           #getMapFromDay,
           [day],
@@ -267,7 +277,7 @@ class MockDayLocalAdapter extends _i1.Mock implements _i5.DayLocalAdapter {
         ),
       ) as _i2.Day);
   @override
-  String getStringMapFromDate(_i7.CustomDate? date) => (super.noSuchMethod(
+  String getStringMapFromDate(_i8.CustomDate? date) => (super.noSuchMethod(
         Invocation.method(
           #getStringMapFromDate,
           [date],
@@ -276,7 +286,7 @@ class MockDayLocalAdapter extends _i1.Mock implements _i5.DayLocalAdapter {
       ) as String);
   @override
   Map<String, dynamic> getMapFromActivity(
-          _i8.HabitActivityCreation? activity) =>
+          _i9.HabitActivityCreation? activity) =>
       (super.noSuchMethod(
         Invocation.method(
           #getMapFromActivity,
@@ -287,26 +297,41 @@ class MockDayLocalAdapter extends _i1.Mock implements _i5.DayLocalAdapter {
   @override
   Map<String, dynamic> getMapFromDayIdAndActivityId(
     int? dayId,
-    int? activityId,
+    _i3.HabitActivity? activity,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #getMapFromDayIdAndActivityId,
           [
             dayId,
-            activityId,
+            activity,
           ],
         ),
         returnValue: <String, dynamic>{},
       ) as Map<String, dynamic>);
   @override
-  List<_i9.HabitActivity> getActivitiesFromJson(
+  List<_i3.HabitActivity> getActivitiesFromJson(
           List<Map<String, dynamic>>? jsonList) =>
       (super.noSuchMethod(
         Invocation.method(
           #getActivitiesFromJson,
           [jsonList],
         ),
-        returnValue: <_i9.HabitActivity>[],
-      ) as List<_i9.HabitActivity>);
+        returnValue: <_i3.HabitActivity>[],
+      ) as List<_i3.HabitActivity>);
+  @override
+  _i3.HabitActivity getActivityFromJson(Map<String, dynamic>? jsonActivity) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getActivityFromJson,
+          [jsonActivity],
+        ),
+        returnValue: _FakeHabitActivity_1(
+          this,
+          Invocation.method(
+            #getActivityFromJson,
+            [jsonActivity],
+          ),
+        ),
+      ) as _i3.HabitActivity);
 }

@@ -19,8 +19,8 @@ class InitActivityCreation extends DayEvent{
 }
 
 class ChooseRepeatableActivity extends DayEvent{
-  final HabitActivity? activity;
-  const ChooseRepeatableActivity(this.activity);
+  final int? index;
+  const ChooseRepeatableActivity(this.index);
 }
 
 class UpdateActivityName extends DayEvent{
@@ -44,8 +44,7 @@ class UpdateActivityWork extends DayEvent{
 }
 
 class ChangeSaveActivityToRepeat extends DayEvent{
-  final bool repeat;
-  const ChangeSaveActivityToRepeat(this.repeat);
+  const ChangeSaveActivityToRepeat();
 }
 
 class CreateActivity extends DayEvent{

@@ -73,7 +73,6 @@ class OnShowingDayError extends OnShowingDay implements OnError{
 class OnCreatingActivity extends OnDay{
   final HabitActivityCreation activity;
   final List<HabitActivity> repeatableActivities;
-  final HabitActivity? chosenRepeatableActivity;
   final ActivityTextControllersContainer activityControllersContainer;
   final bool canEnd;
   const OnCreatingActivity({
@@ -82,7 +81,6 @@ class OnCreatingActivity extends OnDay{
     required super.canBeModified,
     required this.activity,
     required this.repeatableActivities,
-    required this.chosenRepeatableActivity,
     required this.activityControllersContainer,
     required this.canEnd
   });
@@ -90,7 +88,6 @@ class OnCreatingActivity extends OnDay{
   List<Object?> get props => [
     activity,
     repeatableActivities,
-    chosenRepeatableActivity,
     activityControllersContainer.isEmpty,
     canEnd
   ];
@@ -106,7 +103,6 @@ class OnCreatingActivityError extends OnCreatingActivity implements OnError{
     required super.activity,
     required super.restantWork,
     required super.repeatableActivities,
-    required super.chosenRepeatableActivity,
     required super.canBeModified,
     required super.activityControllersContainer,
     required super.canEnd,

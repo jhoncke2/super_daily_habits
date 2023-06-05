@@ -32,11 +32,11 @@ class ActivityTextControllersGeneratorImpl implements ActivityTextControllersGen
   }
 
   @override
-  TextEditingController get minutesDurationController =>
+  TextEditingController get nameController =>
     _controllers[_nameIndex];
 
   @override
-  TextEditingController get nameController =>
+  TextEditingController get minutesDurationController =>
     _controllers[_minutesDurationIndex];
 
   @override
@@ -46,14 +46,14 @@ class ActivityTextControllersGeneratorImpl implements ActivityTextControllersGen
   @override
   bool get isEmpty =>
     _controllers.isEmpty;
-    
+  
   @override
-  void updateMinutesDurationController(String newValue) {
+  void updateNameController(String newValue) {
     _controllers[_nameIndex].text = newValue;
   }
 
   @override
-  void updateNameController(String newValue) {
+  void updateMinutesDurationController(String newValue) {
     _controllers[_minutesDurationIndex].text = newValue;
   }
 

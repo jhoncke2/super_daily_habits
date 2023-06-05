@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_daily_habits/app_theme.dart';
 import 'package:super_daily_habits/features/today/domain/bloc/day_bloc.dart';
+import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator/activity_input.dart';
+import 'package:super_daily_habits/features/today/presentation/widgets/activity_creator/repeatable_activities_selecter.dart';
 import '../../utils.dart' as utils;
 
 const durationCollidesMessage = 'Elige una duración que se ajuste';
@@ -35,9 +37,11 @@ class ActivityCreator extends StatelessWidget {
               onChanged: (newValue){
                 BlocProvider.of<DayBloc>(context).add(UpdateActivityName(newValue));
               },
+              controller: blocState.activityControllersContainer.nameController,
               decoration: const InputDecoration(
                 hintText: 'Nombre'
-              )
+              ),
+              readOnly: blocState.activity.repeatability == ActivityRepeatability.repeated
             ),
             SizedBox(
               height: dimens.getHeightPercentage(0.02)
@@ -86,6 +90,7 @@ class ActivityCreator extends StatelessWidget {
                 blocState is OnError && (blocState as OnError).type == ErrorType.durationCollides
               ),
               errorMessage: durationCollidesMessage,
+              controller: blocState.activityControllersContainer.minutesDurationController,
             ),
             SizedBox(
               height: dimens.getHeightPercentage(0.02)
@@ -99,6 +104,35 @@ class ActivityCreator extends StatelessWidget {
                 blocState is OnError && (blocState as OnError).type == ErrorType.notEnoughWork
               ),
               errorMessage: notEnoughWorkMessage,
+              controller: blocState.activityControllersContainer.workController,
+              isAvaible: blocState.activity.repeatability != ActivityRepeatability.repeated,
+            ),
+            SizedBox(
+              height: dimens.getHeightPercentage(0.03)
+            ),
+            RepeatableActivitiesSelecter(),
+            SizedBox(
+              height: dimens.getHeightPercentage(0.03)
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: blocState.activity.repeatability == ActivityRepeatability.repeatable,
+                  onChanged: blocState.activity.repeatability == ActivityRepeatability.repeated? null : (_){
+                    BlocProvider.of<DayBloc>(context).add(const ChangeSaveActivityToRepeat());
+                  }
+                ),
+                Text(
+                  'Guardar como repetible',
+                  style: TextStyle(
+                    fontSize: dimens.normalTextSize,
+                    color: blocState.activity.repeatability == ActivityRepeatability.repeated?
+                      AppColors.textSecondary:
+                      AppColors.textPrimary
+                  ),
+                )
+              ],
             ),
             SizedBox(
               height: dimens.getHeightPercentage(0.03)

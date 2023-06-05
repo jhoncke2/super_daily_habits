@@ -5,12 +5,16 @@ class ActivityInput extends StatelessWidget {
   final Function(String) onChanged;
   final bool isOnError;
   final String errorMessage;
+  final TextEditingController controller;
+  final bool isAvaible;
   const ActivityInput({
     Key? key,
     required this.hintText,
     required this.onChanged,
     required this.isOnError,
-    required this.errorMessage
+    required this.errorMessage,
+    required this.controller,
+    this.isAvaible = true
   }) : super(key: key);
 
   @override
@@ -20,11 +24,13 @@ class ActivityInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
+          controller: controller,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             hintText: hintText,
           ),
           onChanged: onChanged,
+          readOnly: !isAvaible,
         ),
         Visibility(
           visible: isOnError,

@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors, sdk_version_since
+
 import 'package:super_daily_habits/common/domain/custom_time_manager.dart';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 
@@ -13,20 +15,26 @@ class TimeRangeCalificatorImpl implements TimeRangeCalificator{
   });
   @override
   bool timeIsBetweenTimeRange(CustomTime time, CustomTime rangeInit, int minutesDuration) {
-    final rangeEnd = customTimeManager.getTimeWithMinutesAdded(rangeInit, minutesDuration);
-    return
-    (
-      rangeInit.hour != rangeEnd.hour
-      && (
-            (time.hour > rangeInit.hour && time.hour < rangeEnd.hour)
-         || (time.minute >= rangeInit.minute && time.hour == rangeInit.hour)
-         || (time.minute <= rangeEnd.minute && time.hour == rangeEnd.hour)
-        )
-    )
-    || (
-      time.hour == rangeInit.hour && rangeInit.minute <= time.minute && time.minute < rangeEnd.minute
-    )
-    ;
+    final evaluatedDate = DateTime.now().copyWith(
+      hour: time.hour,
+      minute: time.minute,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0
+    );
+    final dateInit = DateTime.now().copyWith(
+      hour: rangeInit.hour,
+      minute: rangeInit.minute,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0
+    );
+    final dateEnd = dateInit.add(Duration(
+      minutes: minutesDuration
+    ));
+    return (
+      (evaluatedDate.isAfter(dateInit) || evaluatedDate.isAtSameMomentAs(dateInit)) && evaluatedDate.isBefore(dateEnd)
+    );
   }
     
   
@@ -36,12 +44,13 @@ class TimeRangeCalificatorImpl implements TimeRangeCalificator{
       initialTime1,
       duration1
     );
+    final quest1 = timeIsBetweenTimeRange(
+      initialTime1,
+      initialTime2,
+      duration2
+    );
     return (
-      timeIsBetweenTimeRange(
-        initialTime1,
-        initialTime2,
-        duration2
-      )
+      quest1
       || 
       timeIsBetweenTimeRange(
         endTime1,

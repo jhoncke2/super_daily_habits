@@ -48,9 +48,21 @@ class DayLocalDataSourceImpl implements DayLocalDataSource{
 
   @override
   Future<void> setActivityToDay(HabitActivityCreation activity, Day day)async{
-    final jsonActivity = adapter.getMapFromActivity(activity);
-    final activityId = await dbManager.insert(activitiesTableName, jsonActivity);
-    final jsonDayActivity = adapter.getMapFromDayIdAndActivityId(day.id, activityId);
+    late int activityId;
+    if(activity.repeatability == ActivityRepeatability.repeated){
+      activityId = activity.repeatedActivity!.id;
+    }else{
+      final jsonActivityToCreate = adapter.getMapFromActivity(activity);
+      activityId = await dbManager.insert(activitiesTableName, jsonActivityToCreate);
+    }
+    final createdActivity = HabitActivity(
+      id: activityId,
+      name: activity.name,
+      minutesDuration: activity.minutesDuration,
+      work: activity.work,
+      initialTime: activity.initialTime!
+    );
+    final jsonDayActivity = adapter.getMapFromDayIdAndActivityId(day.id, createdActivity);
     await dbManager.insert(daysActivitiesTableName, jsonDayActivity);
   }
   
