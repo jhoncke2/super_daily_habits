@@ -22,6 +22,10 @@ const weekDaysHollyDayValue = 'hollyday';
 // ************ days relation
 const daysTableName = 'days';
 const daysDateKey = 'date';
+const daysDateYearKey = 'year';
+const daysDateMonthKey = 'month';
+const daysDateDayKey = 'day';
+const daysDateWeekDayKey = 'week_day';
 const daysWorkKey = 'work';
 const daysRestantWorkKey = 'restant_work';
 // ************ activities relation
@@ -174,16 +178,16 @@ class DataBaseManagerImpl implements DatabaseManager{
 }
 
 class CustomDataBaseFactory{
-  static const String DB_NAME = 'super_daily_habits.db';
-  static const int DB_VERSION = 3;
+  static const String dbName = 'super_daily_habits.db';
+  static const int dbVersion = 4;
 
   static Future<Database> get dataBase async => await initDataBase();
 
   static Future<Database> initDataBase()async{
     Directory directory = await getApplicationDocumentsDirectory();
-    String path = join(directory.path, DB_NAME);
+    String path = join(directory.path, dbName);
     //await deleteDatabase(path);
-    return await openDatabase(path, version: DB_VERSION, onCreate: _onCreate);
+    return await openDatabase(path, version: dbVersion, onCreate: _onCreate);
   }
 
   static Future _onCreate(Database db, int version)async{
@@ -198,7 +202,10 @@ class CustomDataBaseFactory{
     db.execute('''
       CREATE TABLE $daysTableName (
         $idKey INTEGER PRIMARY KEY,
-        $daysDateKey TEXT NOT NULL,
+        $daysDateYearKey INTEGER NOT NULL,
+        $daysDateMonthKey INTEGER NOT NULL,
+        $daysDateDayKey INTEGER NOT NULL,
+        $daysDateWeekDayKey INTEGER NOT NULL,
         $daysWorkKey INTEGER NOT NULL,
         $daysRestantWorkKey INTEGER NOT NULL
       )

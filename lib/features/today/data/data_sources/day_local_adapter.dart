@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_literals_to_create_immutables
+
 import 'dart:convert';
 import 'package:super_daily_habits/features/today/domain/entities/custom_time.dart';
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
@@ -7,11 +9,44 @@ import 'package:super_daily_habits/common/data/database.dart' as database;
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity.dart';
 import 'package:super_daily_habits/features/today/domain/entities/activity/habit_activity_creation.dart';
 
-abstract class DayLocalAdapter{
-  Map<String, dynamic> getMapFromDay(DayBase day);
+abstract class DayAdapter{
   Day getEmptyDayFromMap(Map<String, dynamic> map);
+}
+
+abstract class DayAdapterImpl implements DayAdapter{
+  static const yearKey = 'year';
+  static const monthKey = 'month';
+  static const dayKey = 'day';
+  static const weekDayKey = 'week_day';
+
+  @override
+  Day getEmptyDayFromMap(Map<String, dynamic> map) => Day(
+    id: map[database.idKey],
+    date: getDateFromDayMap(map),
+    activities: [],
+    totalWork: map[database.daysWorkKey],
+    restantWork: map[database.daysRestantWorkKey]
+  );
+
+  CustomDate getDateFromMap(Map<String, dynamic> jsonDate) => CustomDate(
+    year: jsonDate[yearKey],
+    month: jsonDate[monthKey],
+    day: jsonDate[dayKey],
+    weekDay: jsonDate[weekDayKey]
+  );
+
+  CustomDate getDateFromDayMap(Map<String, dynamic> dayJson) => CustomDate(
+    year: dayJson[database.daysDateYearKey],
+    month: dayJson[database.daysDateMonthKey],
+    day: dayJson[database.daysDateDayKey],
+    weekDay: dayJson[database.daysDateWeekDayKey]
+  );
+  
+}
+
+abstract class DayLocalAdapter extends DayAdapterImpl{
+  Map<String, dynamic> getMapFromDay(DayBase day);
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities);
-  String getStringMapFromDate(CustomDate date);
   Map<String, dynamic> getMapFromActivity(HabitActivityCreation activity);
   Map<String, dynamic> getMapFromDayIdAndActivityId(int dayId, HabitActivity activity);
   List<HabitActivity> getActivitiesFromJson(List<Map<String, dynamic>> jsonList);
@@ -28,35 +63,15 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
   static const minuteKey = 'minute';
 
   @override
-  Day getEmptyDayFromMap(Map<String, dynamic> map) => Day(
-    id: map[database.idKey],
-    date: _getDateFromMap(
-      jsonDecode(map[
-        database.daysDateKey
-      ])
-    ),
-    activities: [],
-    totalWork: map[database.daysWorkKey],
-    restantWork: map[database.daysRestantWorkKey]
-  );
-
-  CustomDate _getDateFromMap(Map<String, dynamic> jsonDate) => CustomDate(
-    year: jsonDate[yearKey],
-    month: jsonDate[monthKey],
-    day: jsonDate[dayKey],
-    weekDay: jsonDate[weekDayKey]
-  );
-
-  @override
   Map<String, dynamic> getMapFromDay(DayBase day) => {
-    database.daysDateKey: getStringMapFromDate(day.date),
+    database.daysDateYearKey: day.date.year,
+    database.daysDateMonthKey: day.date.month,
+    database.daysDateDayKey: day.date.day,
+    database.daysDateWeekDayKey: day.date.weekDay,
     database.daysWorkKey: day.totalWork,
     database.daysRestantWorkKey: day.restantWork
   };
 
-  @override
-  String getStringMapFromDate(CustomDate date) =>
-      jsonEncode(_getMapFromDate(date));
   
   Map<String, dynamic> _getMapFromDate(CustomDate date) => {
     yearKey: date.year,
@@ -115,7 +130,7 @@ class DayLocalAdapterImpl extends DayLocalAdapter{
   @override
   Day getFilledDayWithActivitiesFromMap(Map<String, dynamic> jsonDay, List<Map<String, dynamic>> jsonActivities) => Day(
     id: jsonDay[database.idKey],
-    date: _getDateFromMap(jsonDecode(
+    date: getDateFromMap(jsonDecode(
       jsonDay[database.daysDateKey]
     )),
     activities: jsonActivities.map<HabitActivity>(

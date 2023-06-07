@@ -9,7 +9,7 @@ import 'package:super_daily_habits/features/today/domain/entities/activity/habit
 import 'package:super_daily_habits/features/today/domain/entities/day/day_base.dart';
 
 class DayLocalDataSourceImpl implements DayLocalDataSource{
-  static const dayByDateQuery = '$daysDateKey = ?';
+  static const dayByDateQuery = '$daysDateYearKey = ? AND $daysDateMonthKey = ? AND $daysDateDayKey = ?';
   static const dayByIdInnerJoinQuery = '$daysActivitiesTableName.$daysActivitiesDayIdKey = ?';
   static const activityByIdOnDaysActivitiesQuery = '$daysActivitiesActivityIdKey = ?';
   static const activitiesByRepeatablesQuery = '$activitiesIsRepeatableKey = ?';
@@ -22,11 +22,10 @@ class DayLocalDataSourceImpl implements DayLocalDataSource{
   
   @override
   Future<Day> getDayFromDate(CustomDate date)async{
-    final stringJsonDate = adapter.getStringMapFromDate(date);
     final jsonDays = await dbManager.queryWhere(
       daysTableName,
       dayByDateQuery,
-      [stringJsonDate]
+      [date.year, date.month, date.day]
     );
     if(jsonDays.isNotEmpty){
       final jsonDay = jsonDays[0];
